@@ -34,13 +34,13 @@ Permite descargar en lote los comprobantes electrónicos de retención en format
   - Guardado ordenado mediante `chrome.downloads.download`.
   - *Evidencia:* Throttling secuencial, validación de contenido XML y persistencia en storage (`a6a0769`). 33 tests unitarios en verde.
 
-- [ ] **5. Popup UI: Panel de control básico**
+- [x] **5. Popup UI: Panel de control básico**
   - Vista popup en TypeScript con estado de comprobantes detectados en la pestaña activa.
   - Botón de descarga masiva, barra de progreso en tiempo real y contador de éxitos/fallos.
-  - *Evidencia:* Componente popup renderizado y enlazado a la mensajería interna.
+  - *Evidencia:* Popup responsivo con métricas en tiempo real, control de pausas y listado de errores (`019a807`). 37 tests unitarios en verde.
 
-- [ ] **6. Verificación integral, tests y empaquetado**
+- [x] **6. Verificación integral, tests y empaquetado**
   - Ejecutar suite de pruebas con Vitest.
   - Build de producción con Vite (`npm run build`).
   - Instrucciones claras para cargar la extensión en Chrome Developer Mode (`chrome://extensions`).
-  - *Evidencia:* Build limpio en `dist/` y suite de tests en verde.
+  - *Evidencia:* Build limpio en `dist/`, 37 tests unitarios en verde y documentación exhaustiva (`41e31cb`).
