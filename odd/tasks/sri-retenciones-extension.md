@@ -28,11 +28,11 @@ Permite descargar en lote los comprobantes electrónicos de retención en format
   - Comunicación con el Background Worker.
   - *Evidencia:* Parser testeado con descomposición de 49 dígitos del SRI y MutationObserver dinámico (`201fb61`). 21 tests unitarios en verde.
 
-- [ ] **4. Background Service Worker: Motor de cola de descargas con Throttling**
+- [x] **4. Background Service Worker: Motor de cola de descargas con Throttling**
   - Implementar cola de descarga (`DownloadQueue`) con control de concurrencia y pausas (throttling) para evitar rate-limiting del SRI.
   - Mecanismo de fetch del XML autenticado con la sesión del navegador.
   - Guardado ordenado mediante `chrome.downloads.download`.
-  - *Evidencia:* Pruebas unitarias de la cola (throttling, reintentos y reporte de progreso).
+  - *Evidencia:* Throttling secuencial, validación de contenido XML y persistencia en storage (`a6a0769`). 33 tests unitarios en verde.
 
 - [ ] **5. Popup UI: Panel de control básico**
   - Vista popup en TypeScript con estado de comprobantes detectados en la pestaña activa.

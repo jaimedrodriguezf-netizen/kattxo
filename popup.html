@@ -7,8 +7,95 @@
   <link rel="stylesheet" href="./src/popup/style.css" />
 </head>
 <body>
-  <div id="app">
-    <h1>Kattxo SRI</h1>
+  <div class="kattxo-container">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-badge">K</span>
+        <div class="logo-text">
+          <h2>Kattxo SRI</h2>
+          <span class="subtitle">Descargador de Retenciones</span>
+        </div>
+      </div>
+      <span id="connection-badge" class="badge badge-idle">Verificando...</span>
+    </header>
+
+    <main class="content">
+      <!-- Sección Detección -->
+      <section class="card">
+        <div class="card-header">
+          <h3>Retenciones Detectadas</h3>
+          <button id="btn-scan" class="btn btn-sm btn-outline" title="Re-escanear página actual">🔄 Escanear</button>
+        </div>
+        <div class="detected-info">
+          <span id="detected-count" class="big-number">0</span>
+          <span class="detected-label">comprobantes listos</span>
+        </div>
+        <p id="page-hint" class="hint">Abrí la consulta de retenciones en srienlinea.sri.gob.ec</p>
+      </section>
+
+      <!-- Sección Cola / Progreso -->
+      <section class="card">
+        <div class="card-header">
+          <h3>Progreso de Descarga</h3>
+          <span id="queue-status-text" class="status-label">Inactivo</span>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-bar-bg">
+            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
+          </div>
+          <div class="progress-numbers">
+            <span id="progress-percentage">0%</span>
+            <span id="progress-ratio">0 / 0</span>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-title">Total</span>
+            <span id="stat-total" class="stat-val">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-title">Pendientes</span>
+            <span id="stat-pending" class="stat-val">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-title text-success">Completados</span>
+            <span id="stat-completed" class="stat-val text-success">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-title text-danger">Fallidos</span>
+            <span id="stat-failed" class="stat-val text-danger">0</span>
+          </div>
+        </div>
+
+        <div id="active-item-box" class="active-item-box hidden">
+          <span class="spinner"></span>
+          <span id="active-item-text" class="active-item-text">Descargando...</span>
+        </div>
+      </section>
+
+      <!-- Acciones -->
+      <section class="actions">
+        <button id="btn-start" class="btn btn-primary" disabled>
+          Descargar Retenciones XML
+        </button>
+        <div class="btn-group">
+          <button id="btn-pause" class="btn btn-secondary" disabled>Pausar</button>
+          <button id="btn-clear" class="btn btn-outline" disabled>Limpiar</button>
+        </div>
+      </section>
+
+      <!-- Errores -->
+      <section id="error-section" class="card error-card hidden">
+        <h4>Errores recientes</h4>
+        <ul id="error-list" class="error-list"></ul>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Destino: <code>Descargas/Kattxo/Retenciones/</code></span>
+    </footer>
   </div>
   <script type="module" src="./src/popup/index.ts"></script>
 </body>
