@@ -22,11 +22,11 @@ Permite descargar en lote los comprobantes electrónicos de retención en format
   - Crear `manifest.json` con permisos estrictos (`storage`, `downloads`, host permissions para `srienlinea.sri.gob.ec`).
   - *Evidencia:* Tipado estricto, validadores y manifest validado (`dd695cf`). 14 tests unitarios en verde.
 
-- [ ] **3. Content Script para SRI en Línea (Extractor de Retenciones)**
+- [x] **3. Content Script para SRI en Línea (Extractor de Retenciones)**
   - Detectar la vista de consulta de comprobantes de retención.
   - Extracción de claves de acceso y metadatos (fecha, RUC emisor/retenedor, número de comprobante) desde el DOM / respuestas del SRI.
   - Comunicación con el Background Worker.
-  - *Evidencia:* Parser testeado con fixtures de ejemplo del SRI.
+  - *Evidencia:* Parser testeado con descomposición de 49 dígitos del SRI y MutationObserver dinámico (`201fb61`). 21 tests unitarios en verde.
 
 - [ ] **4. Background Service Worker: Motor de cola de descargas con Throttling**
   - Implementar cola de descarga (`DownloadQueue`) con control de concurrencia y pausas (throttling) para evitar rate-limiting del SRI.
