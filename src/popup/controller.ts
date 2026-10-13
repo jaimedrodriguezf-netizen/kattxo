@@ -88,6 +88,9 @@ export class PopupController {
     if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
       const msg: GetQueueStateMessage = { type: 'GET_QUEUE_STATE' };
       chrome.runtime.sendMessage(msg, (response: MessageResponse<{ queueState: QueueState }>) => {
+        if (chrome.runtime.lastError) {
+          return;
+        }
         if (response?.success && response.data?.queueState) {
           this.queueState = response.data.queueState;
           this.render();
@@ -107,6 +110,10 @@ export class PopupController {
 
     const msg: ScanPageRequestMessage = { type: 'SCAN_PAGE_REQUEST' };
     chrome.tabs.sendMessage(tabId, msg, (response: MessageResponse<{ retenciones: RetentionVoucher[] }>) => {
+      if (chrome.runtime.lastError) {
+        // La pestaña fue abierta antes de recargar la extensión y requiere F5
+        return;
+      }
       if (response?.success && response.data) {
         this.detectedRetenciones = response.data.retenciones;
         this.render();
@@ -123,6 +130,7 @@ export class PopupController {
     };
 
     chrome.runtime.sendMessage(msg, (response: MessageResponse<QueueState>) => {
+      if (chrome.runtime.lastError) return;
       if (response?.success && response.data) {
         this.queueState = response.data;
         this.render();
@@ -136,6 +144,7 @@ export class PopupController {
     if (this.queueState.stats.isPaused) {
       const msg: ResumeDownloadQueueMessage = { type: 'RESUME_DOWNLOAD_QUEUE' };
       chrome.runtime.sendMessage(msg, (res: MessageResponse<QueueState>) => {
+        if (chrome.runtime.lastError) return;
         if (res?.success && res.data) {
           this.queueState = res.data;
           this.render();
@@ -144,6 +153,7 @@ export class PopupController {
     } else {
       const msg: PauseDownloadQueueMessage = { type: 'PAUSE_DOWNLOAD_QUEUE' };
       chrome.runtime.sendMessage(msg, (res: MessageResponse<QueueState>) => {
+        if (chrome.runtime.lastError) return;
         if (res?.success && res.data) {
           this.queueState = res.data;
           this.render();
@@ -157,6 +167,7 @@ export class PopupController {
 
     const msg: ClearQueueMessage = { type: 'CLEAR_QUEUE' };
     chrome.runtime.sendMessage(msg, (res: MessageResponse<QueueState>) => {
+      if (chrome.runtime.lastError) return;
       if (res?.success && res.data) {
         this.queueState = res.data;
         this.render();
