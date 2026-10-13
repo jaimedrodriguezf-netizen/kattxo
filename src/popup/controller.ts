@@ -2,11 +2,10 @@ import {
   ExtensionMessage,
   GetQueueStateMessage,
   MessageResponse,
-  PauseDownloadQueueMessage,
-  ResumeDownloadQueueMessage,
-  StartDownloadQueueMessage,
-  ClearQueueMessage,
   ScanPageRequestMessage,
+  StartInPageDownloadMessage,
+  PauseInPageDownloadMessage,
+  ResumeInPageDownloadMessage,
 } from '../domain/messages';
 import { QueueState, QueueStats, RetentionVoucher } from '../domain/types';
 
@@ -26,6 +25,7 @@ export class PopupController {
   private detectedRetenciones: RetentionVoucher[] = [];
   private queueState: QueueState | null = null;
   private isSriTab = false;
+  private activeTabId?: number;
 
   public async init(): Promise<void> {
     this.setupListeners();
@@ -37,17 +37,33 @@ export class PopupController {
   }
 
   private setupListeners(): void {
-    // Botones
     document.getElementById('btn-scan')?.addEventListener('click', () => this.scanCurrentTab());
     document.getElementById('btn-start')?.addEventListener('click', () => this.startDownload());
     document.getElementById('btn-pause')?.addEventListener('click', () => this.togglePause());
     document.getElementById('btn-clear')?.addEventListener('click', () => this.clearQueue());
 
-    // Escuchar mensajes broadcast del Background
+    // Escuchar mensajes broadcast del Background y del Content Script
     if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
       chrome.runtime.onMessage.addListener((message: ExtensionMessage) => {
         if (message.type === 'QUEUE_STATE_CHANGED') {
           this.queueState = message.payload;
+          this.render();
+        } else if (message.type === 'DOWNLOAD_PROGRESS_UPDATE') {
+          const { total, completed, failed, currentKey, isPaused, isFinished } = message.payload;
+          const pending = Math.max(0, total - (completed + failed));
+          this.queueState = {
+            items: [],
+            stats: {
+              total,
+              pending,
+              downloading: currentKey ? 1 : 0,
+              completed,
+              failed,
+              isPaused,
+              isRunning: !isFinished && !isPaused,
+            },
+            currentActiveKey: currentKey,
+          };
           this.render();
         }
       });
@@ -60,6 +76,7 @@ export class PopupController {
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const currentTab = tabs[0];
+      this.activeTabId = currentTab?.id;
       const url = currentTab?.url || '';
       this.isSriTab = url.includes('srienlinea.sri.gob.ec');
     } catch {
@@ -69,7 +86,6 @@ export class PopupController {
   }
 
   private async loadInitialData(): Promise<void> {
-    // 1. Cargar último estado detectado de storage local
     if (typeof chrome !== 'undefined' && chrome.storage?.local) {
       try {
         const stored = await chrome.storage.local.get(['kattxo_last_detected', 'kattxo_queue_state']);
@@ -84,13 +100,10 @@ export class PopupController {
       }
     }
 
-    // 2. Consultar estado fresco al background
     if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
       const msg: GetQueueStateMessage = { type: 'GET_QUEUE_STATE' };
       chrome.runtime.sendMessage(msg, (response: MessageResponse<{ queueState: QueueState }>) => {
-        if (chrome.runtime.lastError) {
-          return;
-        }
+        if (chrome.runtime.lastError) return;
         if (response?.success && response.data?.queueState) {
           this.queueState = response.data.queueState;
           this.render();
@@ -102,18 +115,11 @@ export class PopupController {
   }
 
   public async scanCurrentTab(): Promise<void> {
-    if (typeof chrome === 'undefined' || !chrome.tabs?.query) return;
-
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    const tabId = tabs[0]?.id;
-    if (!tabId) return;
+    if (typeof chrome === 'undefined' || !this.activeTabId) return;
 
     const msg: ScanPageRequestMessage = { type: 'SCAN_PAGE_REQUEST' };
-    chrome.tabs.sendMessage(tabId, msg, (response: MessageResponse<{ retenciones: RetentionVoucher[] }>) => {
-      if (chrome.runtime.lastError) {
-        // La pestaña fue abierta antes de recargar la extensión y requiere F5
-        return;
-      }
+    chrome.tabs.sendMessage(this.activeTabId, msg, (response: MessageResponse<{ retenciones: RetentionVoucher[] }>) => {
+      if (chrome.runtime.lastError) return;
       if (response?.success && response.data) {
         this.detectedRetenciones = response.data.retenciones;
         this.render();
@@ -122,40 +128,54 @@ export class PopupController {
   }
 
   public startDownload(): void {
-    if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) return;
+    if (typeof chrome === 'undefined' || !this.activeTabId) return;
 
-    const msg: StartDownloadQueueMessage = {
-      type: 'START_DOWNLOAD_QUEUE',
+    // Disparar la descarga en la página que tiene la sesión JSF / Mojarra activa
+    const msg: StartInPageDownloadMessage = {
+      type: 'START_IN_PAGE_DOWNLOAD',
       payload: { retenciones: this.detectedRetenciones },
     };
 
-    chrome.runtime.sendMessage(msg, (response: MessageResponse<QueueState>) => {
+    chrome.tabs.sendMessage(this.activeTabId, msg, (response: MessageResponse<{ status: string }>) => {
       if (chrome.runtime.lastError) return;
-      if (response?.success && response.data) {
-        this.queueState = response.data;
+      if (response?.success) {
+        this.queueState = {
+          items: [],
+          stats: {
+            total: this.detectedRetenciones.length,
+            pending: this.detectedRetenciones.length,
+            downloading: 1,
+            completed: 0,
+            failed: 0,
+            isPaused: false,
+            isRunning: true,
+          },
+        };
         this.render();
       }
     });
   }
 
   public togglePause(): void {
-    if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage || !this.queueState) return;
+    if (typeof chrome === 'undefined' || !this.activeTabId || !this.queueState) return;
 
     if (this.queueState.stats.isPaused) {
-      const msg: ResumeDownloadQueueMessage = { type: 'RESUME_DOWNLOAD_QUEUE' };
-      chrome.runtime.sendMessage(msg, (res: MessageResponse<QueueState>) => {
+      const msg: ResumeInPageDownloadMessage = { type: 'RESUME_IN_PAGE_DOWNLOAD' };
+      chrome.tabs.sendMessage(this.activeTabId, msg, (res: MessageResponse<{ status: string }>) => {
         if (chrome.runtime.lastError) return;
-        if (res?.success && res.data) {
-          this.queueState = res.data;
+        if (res?.success && this.queueState) {
+          this.queueState.stats.isPaused = false;
+          this.queueState.stats.isRunning = true;
           this.render();
         }
       });
     } else {
-      const msg: PauseDownloadQueueMessage = { type: 'PAUSE_DOWNLOAD_QUEUE' };
-      chrome.runtime.sendMessage(msg, (res: MessageResponse<QueueState>) => {
+      const msg: PauseInPageDownloadMessage = { type: 'PAUSE_IN_PAGE_DOWNLOAD' };
+      chrome.tabs.sendMessage(this.activeTabId, msg, (res: MessageResponse<{ status: string }>) => {
         if (chrome.runtime.lastError) return;
-        if (res?.success && res.data) {
-          this.queueState = res.data;
+        if (res?.success && this.queueState) {
+          this.queueState.stats.isPaused = true;
+          this.queueState.stats.isRunning = false;
           this.render();
         }
       });
@@ -163,20 +183,11 @@ export class PopupController {
   }
 
   public clearQueue(): void {
-    if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) return;
-
-    const msg: ClearQueueMessage = { type: 'CLEAR_QUEUE' };
-    chrome.runtime.sendMessage(msg, (res: MessageResponse<QueueState>) => {
-      if (chrome.runtime.lastError) return;
-      if (res?.success && res.data) {
-        this.queueState = res.data;
-        this.render();
-      }
-    });
+    this.queueState = null;
+    this.render();
   }
 
   public render(): void {
-    // 1. Connection Badge
     const badgeEl = document.getElementById('connection-badge');
     if (badgeEl) {
       if (this.isSriTab) {
@@ -188,7 +199,6 @@ export class PopupController {
       }
     }
 
-    // 2. Detección
     const countEl = document.getElementById('detected-count');
     if (countEl) {
       countEl.textContent = String(this.detectedRetenciones.length);
@@ -206,7 +216,6 @@ export class PopupController {
       }
     }
 
-    // 3. Stats & Progreso
     const stats = this.queueState?.stats || {
       total: 0,
       pending: 0,
@@ -241,7 +250,6 @@ export class PopupController {
     const statFailed = document.getElementById('stat-failed');
     if (statFailed) statFailed.textContent = String(stats.failed);
 
-    // 4. Estado de texto & item activo
     const statusTextEl = document.getElementById('queue-status-text');
     if (statusTextEl) {
       if (stats.isRunning) {
@@ -270,7 +278,6 @@ export class PopupController {
       }
     }
 
-    // 5. Botones
     const btnStart = document.getElementById('btn-start') as HTMLButtonElement | null;
     if (btnStart) {
       const hasSomethingToStart = this.detectedRetenciones.length > 0 || stats.pending > 0;
@@ -288,20 +295,9 @@ export class PopupController {
       btnClear.disabled = stats.total === 0 || stats.isRunning;
     }
 
-    // 6. Lista de errores
     const errorSection = document.getElementById('error-section');
-    const errorList = document.getElementById('error-list');
-    if (errorSection && errorList) {
-      const failedItems = this.queueState?.items.filter((i) => i.status === 'failed') || [];
-      if (failedItems.length > 0) {
-        errorSection.classList.remove('hidden');
-        errorList.innerHTML = failedItems
-          .slice(-5)
-          .map((i) => `<li>${i.voucher.numeroComprobante || i.id.slice(-8)}: ${i.error || 'Fallo de descarga'}</li>`)
-          .join('');
-      } else {
-        errorSection.classList.add('hidden');
-      }
+    if (errorSection) {
+      errorSection.classList.add('hidden');
     }
   }
 }

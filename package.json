@@ -1,6 +1,6 @@
 {
   "name": "kattxo-sri-extension",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Chrome extension para descarga masiva de retenciones XML del SRI (Ecuador)",
   "type": "module",
   "scripts": {

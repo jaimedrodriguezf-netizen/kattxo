@@ -8,10 +8,41 @@ export type ExtensionMessageType =
   | 'CLEAR_QUEUE'
   | 'GET_QUEUE_STATE'
   | 'QUEUE_STATE_CHANGED'
-  | 'SCAN_PAGE_REQUEST';
+  | 'SCAN_PAGE_REQUEST'
+  | 'START_IN_PAGE_DOWNLOAD'
+  | 'PAUSE_IN_PAGE_DOWNLOAD'
+  | 'RESUME_IN_PAGE_DOWNLOAD'
+  | 'DOWNLOAD_PROGRESS_UPDATE';
 
 export interface BaseMessage {
   type: ExtensionMessageType;
+}
+
+export interface StartInPageDownloadMessage extends BaseMessage {
+  type: 'START_IN_PAGE_DOWNLOAD';
+  payload?: {
+    retenciones?: RetentionVoucher[];
+  };
+}
+
+export interface PauseInPageDownloadMessage extends BaseMessage {
+  type: 'PAUSE_IN_PAGE_DOWNLOAD';
+}
+
+export interface ResumeInPageDownloadMessage extends BaseMessage {
+  type: 'RESUME_IN_PAGE_DOWNLOAD';
+}
+
+export interface DownloadProgressUpdateMessage extends BaseMessage {
+  type: 'DOWNLOAD_PROGRESS_UPDATE';
+  payload: {
+    total: number;
+    completed: number;
+    failed: number;
+    currentKey?: string;
+    isPaused: boolean;
+    isFinished: boolean;
+  };
 }
 
 export interface RetentionsDetectedMessage extends BaseMessage {
@@ -63,7 +94,11 @@ export type ExtensionMessage =
   | ClearQueueMessage
   | GetQueueStateMessage
   | QueueStateChangedMessage
-  | ScanPageRequestMessage;
+  | ScanPageRequestMessage
+  | StartInPageDownloadMessage
+  | PauseInPageDownloadMessage
+  | ResumeInPageDownloadMessage
+  | DownloadProgressUpdateMessage;
 
 export interface MessageResponse<T = unknown> {
   success: boolean;

@@ -21,8 +21,8 @@ export interface RetentionVoucher {
   tipoComprobante: '07' | string;
   /** Estado de autorización en el SRI (ej. 'AUTORIZADO') */
   estado?: string;
-  /** Período fiscal (MM/YYYY) si está disponible */
-  periodoFiscal?: string;
+  /** ID del elemento DOM (ej. 'frmPrincipal:tablaCompRecibidos:0:lnkXml') */
+  elementId?: string;
 }
 
 export type DownloadStatus = 'idle' | 'pending' | 'downloading' | 'completed' | 'failed' | 'paused';

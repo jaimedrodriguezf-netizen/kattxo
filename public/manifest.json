@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Kattxo - Descargador de Retenciones SRI",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Descarga masiva de comprobantes electrónicos de retención (XML) desde SRI en Línea para Kattxo",
   "permissions": [
     "storage",
