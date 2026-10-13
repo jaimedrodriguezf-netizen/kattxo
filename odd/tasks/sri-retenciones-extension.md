@@ -12,10 +12,10 @@ Permite descargar en lote los comprobantes electrónicos de retención en format
 
 ## Tareas
 
-- [ ] **1. Scaffolding del proyecto y configuración de Vite + TypeScript + Vitest**
+- [x] **1. Scaffolding del proyecto y configuración de Vite + TypeScript + Vitest**
   - Inicializar `package.json`, `tsconfig.json`, configuración de Vite para extensión Manifest V3 y Vitest para testing.
   - Dependencias mínimas y scripts de build / test.
-  - *Evidencia:* Tests ejecutables y build inicial funcional.
+  - *Evidencia:* Tests ejecutables y build inicial funcional (`fc36510`). Pipeline dual Vite (ES modules para popup/background + IIFE autocontenido para content script).
 
 - [ ] **2. Tipos de dominio, contratos de mensajería y configuración del Manifest V3**
   - Definir tipos de comprobantes, estados de descarga, eventos entre Content Script, Background Service Worker y Popup.

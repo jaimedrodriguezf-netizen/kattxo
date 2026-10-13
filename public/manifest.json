@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Kattxo - Descargador de Retenciones SRI",
+  "version": "0.1.0",
+  "description": "Descarga masiva de comprobantes electrónicos de retención (XML) desde SRI en Línea para Kattxo",
+  "permissions": [
+    "storage",
+    "downloads",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://srienlinea.sri.gob.ec/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://srienlinea.sri.gob.ec/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Kattxo SRI Retenciones"
+  }
+}
