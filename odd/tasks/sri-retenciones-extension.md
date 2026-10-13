@@ -17,10 +17,10 @@ Permite descargar en lote los comprobantes electrónicos de retención en format
   - Dependencias mínimas y scripts de build / test.
   - *Evidencia:* Tests ejecutables y build inicial funcional (`fc36510`). Pipeline dual Vite (ES modules para popup/background + IIFE autocontenido para content script).
 
-- [ ] **2. Tipos de dominio, contratos de mensajería y configuración del Manifest V3**
+- [x] **2. Tipos de dominio, contratos de mensajería y configuración del Manifest V3**
   - Definir tipos de comprobantes, estados de descarga, eventos entre Content Script, Background Service Worker y Popup.
   - Crear `manifest.json` con permisos estrictos (`storage`, `downloads`, host permissions para `srienlinea.sri.gob.ec`).
-  - *Evidencia:* Tipado estricto y manifest validado.
+  - *Evidencia:* Tipado estricto, validadores y manifest validado (`dd695cf`). 14 tests unitarios en verde.
 
 - [ ] **3. Content Script para SRI en Línea (Extractor de Retenciones)**
   - Detectar la vista de consulta de comprobantes de retención.
