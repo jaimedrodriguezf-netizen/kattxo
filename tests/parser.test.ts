@@ -1,19 +1,23 @@
 import { describe, it, expect } from 'vitest';
-import { parseClaveAcceso, extractRetentionsFromDom } from '../src/content/parser';
+import { parseClaveAcceso, extractRetentionsFromDom, findClavesInText } from '../src/content/parser';
 
 describe('SRI Parser & Clave de Acceso Decomposition', () => {
-  // Clave de acceso de prueba:
-  // Fecha: 15/09/2023 (15092023)
-  // Tipo: 07 (Retención)
-  // RUC: 1790016919001
-  // Ambiente: 2 (Producción)
-  // Serie: 001-002 (001002)
-  // Secuencial: 000004567 (000004567)
-  // Código: 12345678
-  // Emisión: 1
-  // Verificador: 9
   const sampleKeyRetencion = '1509202307179001691900120010020000045671234567819';
   const sampleKeyFactura = '1509202301179001691900120010020000045671234567819';
+  const realUserSriKey = '0409202607179317071400120010010000026416236568918';
+
+  describe('findClavesInText', () => {
+    it('finds standalone 49-digit keys', () => {
+      const keys = findClavesInText(`Texto con clave ${sampleKeyRetencion} fin`);
+      expect(keys).toEqual([sampleKeyRetencion]);
+    });
+
+    it('finds 49-digit keys concatenated with letters (RichFaces table cell gluing)', () => {
+      const glued = `${realUserSriKey}AUTORIZADO001`;
+      const keys = findClavesInText(glued);
+      expect(keys).toEqual([realUserSriKey]);
+    });
+  });
 
   describe('parseClaveAcceso', () => {
     it('decomposes a valid 49-digit retention clave de acceso', () => {
@@ -24,6 +28,15 @@ describe('SRI Parser & Clave de Acceso Decomposition', () => {
       expect(parsed?.rucEmisor).toBe('1790016919001');
       expect(parsed?.fechaEmision).toBe('15/09/2023');
       expect(parsed?.numeroComprobante).toBe('001-002-000004567');
+    });
+
+    it('decomposes real SRI key from user production test', () => {
+      const parsed = parseClaveAcceso(realUserSriKey);
+      expect(parsed).not.toBeNull();
+      expect(parsed?.claveAcceso).toBe(realUserSriKey);
+      expect(parsed?.tipoComprobante).toBe('07');
+      expect(parsed?.rucEmisor).toBe('1793170714001');
+      expect(parsed?.numeroComprobante).toBe('001-001-000002641');
     });
 
     it('identifies invoice (01) type correctly', () => {
@@ -77,6 +90,25 @@ describe('SRI Parser & Clave de Acceso Decomposition', () => {
       expect(vouchers[0].tipoComprobante).toBe('07');
       expect(vouchers[0].razonSocialEmisor).toContain('CORPORACION FAVORITA');
       expect(vouchers[0].numeroComprobante).toBe('001-002-000004567');
+    });
+
+    it('extracts real SRI key even if rendered in a general body div or RichFaces table', () => {
+      document.body.innerHTML = `
+        <div id="form:tablaRecibidos">
+          <table>
+            <tr>
+              <td>EMPRESA X</td>
+              <td>${realUserSriKey}</td>
+              <td>AUTORIZADO</td>
+            </tr>
+          </table>
+        </div>
+      `;
+
+      const vouchers = extractRetentionsFromDom(document);
+      expect(vouchers).toHaveLength(1);
+      expect(vouchers[0].claveAcceso).toBe(realUserSriKey);
+      expect(vouchers[0].tipoComprobante).toBe('07');
     });
 
     it('extracts vouchers from links or download buttons', () => {

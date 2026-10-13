@@ -31,6 +31,9 @@ export class PopupController {
     this.setupListeners();
     await this.checkCurrentTab();
     await this.loadInitialData();
+    if (this.isSriTab) {
+      await this.scanCurrentTab();
+    }
   }
 
   private setupListeners(): void {

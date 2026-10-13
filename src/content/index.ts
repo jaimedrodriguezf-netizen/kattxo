@@ -6,31 +6,38 @@ class SriContentScript {
   private lastDetectedKeys: Set<string> = new Set();
   private observer: MutationObserver | null = null;
   private debounceTimer: number | null = null;
+  private pollingTimer: number | null = null;
 
   public init(): void {
-    console.log('[Kattxo SRI] Content script inicializado.');
+    console.log('[Kattxo SRI] Content script inicializado en:', window.location.href);
     this.scanAndNotify();
     this.setupMutationObserver();
+    this.setupPolling();
     this.setupMessageListener();
   }
 
   public scan(): RetentionVoucher[] {
-    const retenciones = extractRetentionsFromDom(document);
-    return retenciones;
+    try {
+      const retenciones = extractRetentionsFromDom(document);
+      return retenciones;
+    } catch (err) {
+      console.error('[Kattxo SRI] Error extrayendo retenciones del DOM:', err);
+      return [];
+    }
   }
 
   public scanAndNotify(): void {
     const retenciones = this.scan();
     const currentKeys = new Set(retenciones.map((r) => r.claveAcceso));
 
-    // Solo notificar si hay retenciones y hubo cambios respecto al último escaneo
+    // Notificar si hay retenciones y hubo cambios
     const isDifferent =
       currentKeys.size !== this.lastDetectedKeys.size ||
       Array.from(currentKeys).some((k) => !this.lastDetectedKeys.has(k));
 
-    if (isDifferent) {
+    if (isDifferent && retenciones.length > 0) {
       this.lastDetectedKeys = currentKeys;
-      console.log(`[Kattxo SRI] ${retenciones.length} retenciones detectadas en la página.`);
+      console.log(`[Kattxo SRI] ✅ ${retenciones.length} retenciones detectadas en la página.`);
 
       const message: RetentionsDetectedMessage = {
         type: 'RETENTIONS_DETECTED',
@@ -44,7 +51,6 @@ class SriContentScript {
       try {
         if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
           chrome.runtime.sendMessage(message, () => {
-            // Ignorar error si el popup o background no están escuchando en ese milisegundo
             if (chrome.runtime.lastError) {
               // noop
             }
@@ -65,13 +71,24 @@ class SriContentScript {
       }
       this.debounceTimer = window.setTimeout(() => {
         this.scanAndNotify();
-      }, 600);
+      }, 500);
     });
 
     this.observer.observe(document.body, {
       childList: true,
       subtree: true,
+      characterData: true,
     });
+  }
+
+  private setupPolling(): void {
+    // Sondeo de respaldo cada 1.5s para capturar actualizaciones AJAX de RichFaces
+    if (this.pollingTimer) {
+      clearInterval(this.pollingTimer);
+    }
+    this.pollingTimer = window.setInterval(() => {
+      this.scanAndNotify();
+    }, 1500);
   }
 
   private setupMessageListener(): void {

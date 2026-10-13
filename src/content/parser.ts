@@ -33,34 +33,42 @@ export function parseClaveAcceso(key: string): RetentionVoucher | null {
 }
 
 /**
- * Busca todas las claves de acceso de 49 dígitos presentes en un texto.
+ * Busca todas las claves de acceso de 49 dígitos presentes en un texto o HTML.
+ * Utiliza lookaround para no requerir límites de palabra \b (clave para cuando el texto
+ * se concatena sin espacios con palabras como AUTORIZADO en RichFaces / JSF).
  */
 export function findClavesInText(text: string): string[] {
   if (!text) return [];
-  const matches = text.match(/\b\d{49}\b/g);
+  // Exactamente 49 dígitos no precedidos ni sucedidos por otros dígitos
+  const matches = text.match(/(?<!\d)\d{49}(?!\d)/g);
   return matches ? Array.from(new Set(matches)) : [];
 }
 
 /**
  * Extrae comprobantes de retención presentes en el DOM del SRI en Línea.
- * Prioriza filas de tablas para capturar razones sociales y números de comprobante.
+ * Robusto ante RichFaces, PrimeFaces, tablas HTML y marcos iframes embebidos.
  */
 export function extractRetentionsFromDom(doc: Document = document): RetentionVoucher[] {
   const vouchersMap = new Map<string, RetentionVoucher>();
 
-  // 1. Estrategia Tablas (PrimeFaces / JSF / Estándar HTML)
+  // 1. Estrategia Tablas (PrimeFaces / RichFaces / Estándar HTML)
   const rows = doc.querySelectorAll('table tbody tr, table tr');
   rows.forEach((row) => {
-    const rowText = row.textContent || '';
-    const keysInRow = findClavesInText(rowText);
+    // Examinar celda por celda y texto de la fila
+    const cells = Array.from(row.querySelectorAll('td'));
+    const cellsText = cells.map((c) => (c as HTMLElement).innerText || c.textContent || '').join(' ');
+    const rowText = (row as HTMLElement).innerText || row.textContent || '';
+    const combinedText = `${cellsText} ${rowText}`;
+    const keysInRow = findClavesInText(combinedText);
 
-    // También buscar en atributos href o data de la fila
+    // También buscar en atributos href, onclick o data de la fila
     const links = row.querySelectorAll('a, button');
     links.forEach((link) => {
       const href = link.getAttribute('href') || '';
       const onclick = link.getAttribute('onclick') || '';
-      const combined = `${href} ${onclick}`;
-      const urlKeys = findClavesInText(combined);
+      const dataAttr = link.getAttribute('data-clave') || link.getAttribute('data-id') || '';
+      const combinedAttrs = `${href} ${onclick} ${dataAttr}`;
+      const urlKeys = findClavesInText(combinedAttrs);
       keysInRow.push(...urlKeys);
     });
 
@@ -69,19 +77,18 @@ export function extractRetentionsFromDom(doc: Document = document): RetentionVou
     uniqueRowKeys.forEach((key) => {
       const parsed = parseClaveAcceso(key);
       if (parsed && parsed.tipoComprobante === '07') {
-        // Intentar enriquecer razón social examinando celdas de la fila
-        const cells = Array.from(row.querySelectorAll('td'));
+        // Enriquecer razón social examinando celdas
         if (cells.length > 0) {
-          // Buscar una celda con texto que parezca razón social (no números puros ni fechas)
           for (const cell of cells) {
-            const cellText = (cell.textContent || '').trim();
+            const cellText = ((cell as HTMLElement).innerText || cell.textContent || '').trim();
             if (
               cellText.length > 4 &&
               !/^\d+$/.test(cellText) &&
               !/^\d{2}\/\d{2}\/\d{4}$/.test(cellText) &&
               !cellText.includes(key) &&
               !cellText.toLowerCase().includes('retención') &&
-              !cellText.toLowerCase().includes('retencion')
+              !cellText.toLowerCase().includes('retencion') &&
+              !cellText.toLowerCase().includes('autorizado')
             ) {
               parsed.razonSocialEmisor = cellText;
               break;
@@ -95,11 +102,12 @@ export function extractRetentionsFromDom(doc: Document = document): RetentionVou
   });
 
   // 2. Estrategia Enlaces sueltos (botones de descarga de XML fuera de tablas)
-  const allLinks = doc.querySelectorAll('a[href], button[data-clave]');
+  const allLinks = doc.querySelectorAll('a, button');
   allLinks.forEach((el) => {
     const href = el.getAttribute('href') || '';
+    const onclick = el.getAttribute('onclick') || '';
     const dataClave = el.getAttribute('data-clave') || '';
-    const keys = findClavesInText(`${href} ${dataClave}`);
+    const keys = findClavesInText(`${href} ${onclick} ${dataClave}`);
     keys.forEach((key) => {
       if (!vouchersMap.has(key)) {
         const parsed = parseClaveAcceso(key);
@@ -110,17 +118,38 @@ export function extractRetentionsFromDom(doc: Document = document): RetentionVou
     });
   });
 
-  // 3. Fallback de barrido general si no se hallaron en tablas
-  if (vouchersMap.size === 0) {
-    const bodyText = doc.body ? doc.body.textContent || '' : '';
-    const generalKeys = findClavesInText(bodyText);
+  // 3. Estrategia Barrido General del Body (innerText + textContent)
+  const bodyEl = doc.body as HTMLElement | null;
+  if (bodyEl) {
+    const fullText = `${bodyEl.innerText || ''} ${bodyEl.textContent || ''}`;
+    const generalKeys = findClavesInText(fullText);
     generalKeys.forEach((key) => {
-      const parsed = parseClaveAcceso(key);
-      if (parsed && parsed.tipoComprobante === '07') {
-        vouchersMap.set(key, parsed);
+      if (!vouchersMap.has(key)) {
+        const parsed = parseClaveAcceso(key);
+        if (parsed && parsed.tipoComprobante === '07') {
+          vouchersMap.set(key, parsed);
+        }
       }
     });
   }
+
+  // 4. Estrategia Iframes embebidos en el mismo dominio
+  const iframes = doc.querySelectorAll('iframe');
+  iframes.forEach((iframe) => {
+    try {
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (iframeDoc && iframeDoc !== doc) {
+        const iframeVouchers = extractRetentionsFromDom(iframeDoc);
+        iframeVouchers.forEach((v) => {
+          if (!vouchersMap.has(v.claveAcceso)) {
+            vouchersMap.set(v.claveAcceso, v);
+          }
+        });
+      }
+    } catch {
+      // Ignorar cross-origin
+    }
+  });
 
   return Array.from(vouchersMap.values());
 }
