@@ -130,6 +130,8 @@ kattxo/
 
 ---
 
-## 📄 Licencia
+## 📄 Licencia y Autor
 
-Uso interno para el sistema contable **Kattxo**.
+Desarrollado y mantenido por **Ing. Jaime Daniel Rodríguez** ([jaimedrodriguezf@gmail.com](mailto:jaimedrodriguezf@gmail.com)).  
+LinkedIn: [linkedin.com/in/jaime-rodriguez-981463262](https://linkedin.com/in/jaime-rodriguez-981463262) | Portafolio: [januscore.pro](https://januscore.pro)  
+Parte del ecosistema tributario y contable **Kattxo**.
