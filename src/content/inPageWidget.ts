@@ -555,14 +555,15 @@ export class InPageWidget {
       }
     });
 
+    const headerEl = this.shadow.querySelector('.kattxo-widget-header');
+    headerEl?.addEventListener('dblclick', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('button')) return;
+      this.toggleMinimize();
+    });
+
     toggleBtn?.addEventListener('click', () => {
-      this.isMinimized = !this.isMinimized;
-      if (bodyEl) {
-        bodyEl.style.display = this.isMinimized ? 'none' : 'flex';
-      }
-      if (toggleBtn) {
-        toggleBtn.textContent = this.isMinimized ? '▢' : '_';
-      }
+      this.toggleMinimize();
     });
 
     const startBtn = this.shadow.querySelector('.kattxo-start-btn');
@@ -634,6 +635,20 @@ export class InPageWidget {
     });
   }
 
+  public toggleMinimize(): void {
+    if (!this.shadow) return;
+    this.isMinimized = !this.isMinimized;
+    const bodyEl = this.shadow.querySelector<HTMLElement>('.kattxo-widget-body');
+    const toggleBtn = this.shadow.querySelector('.kattxo-toggle-btn');
+
+    if (bodyEl) {
+      bodyEl.style.display = this.isMinimized ? 'none' : 'flex';
+    }
+    if (toggleBtn) {
+      toggleBtn.textContent = this.isMinimized ? '▢' : '_';
+    }
+  }
+
   public hideResumeBanner(): void {
     if (!this.shadow) return;
     const banner = this.shadow.querySelector<HTMLElement>('.kattxo-resume-banner');
@@ -684,6 +699,11 @@ export class InPageWidget {
         <div class="kattxo-item-status"></div>
       `;
       list.appendChild(li);
+
+      // Poda de memoria DOM para evitar consumo excesivo en lotes masivos (+500 comprobantes)
+      while (list.children.length > 100) {
+        list.firstElementChild?.remove();
+      }
     }
 
     this.renderItemStatusBadge(li, status);

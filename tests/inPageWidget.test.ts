@@ -39,6 +39,49 @@ describe('InPageWidget (Shadow DOM Floating Panel)', () => {
     expect(bodyEl.style.display).not.toBe('none');
   });
 
+  it('toggles minimize and expand on header double click (ignoring action buttons)', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const headerEl = shadow.querySelector<HTMLElement>('.kattxo-widget-header')!;
+    const bodyEl = shadow.querySelector<HTMLElement>('.kattxo-widget-body')!;
+
+    expect(bodyEl.style.display).not.toBe('none');
+
+    // Double click header
+    headerEl.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(bodyEl.style.display).toBe('none');
+
+    // Double click header again
+    headerEl.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(bodyEl.style.display).not.toBe('none');
+  });
+
+  it('prunes download list to maximum 100 items for memory efficiency in large batches', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+
+    // Add 110 items
+    for (let i = 1; i <= 110; i++) {
+      widget.addDownloadItem({
+        claveAcceso: `010120240117900000000012001001000000000${String(i).padStart(3, '0')}1234567811`,
+        rucEmisor: '1790000000001',
+        razonSocialEmisor: 'EMPRESA',
+        numeroComprobante: `001-001-${String(i).padStart(9, '0')}`,
+        fechaEmision: '01/01/2024',
+        tipoComprobante: '01',
+      });
+    }
+
+    const list = shadow.querySelector('.kattxo-download-list')!;
+    expect(list.children.length).toBe(100);
+  });
+
   it('updates taxpayer profile display', () => {
     const widget = new InPageWidget();
     widget.mount(document.body);
