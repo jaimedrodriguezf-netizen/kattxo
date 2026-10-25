@@ -218,6 +218,7 @@ class SriContentScript {
     }
 
     this.widget?.clearDownloadList();
+    this.widget?.hideSuccessScreen();
     this.isDownloading = true;
     this.isPaused = false;
     this.currentDownloadIndex = 0;
@@ -266,6 +267,19 @@ class SriContentScript {
     const isFinished = this.currentDownloadIndex >= this.downloadVouchersList.length;
     this.broadcastProgress(this.downloadVouchersList.length, completed, failed, undefined, isFinished);
     console.log(`[Kattxo SRI] Descarga finalizada: ${completed} completados, ${failed} fallidos.`);
+
+    if (isFinished && completed > 0) {
+      this.widget?.showSuccessScreen(
+        {
+          total: this.downloadVouchersList.length,
+          completed,
+          failed,
+        },
+        () => {
+          this.widget?.clearDownloadList();
+        }
+      );
+    }
 
     // Registrar en el historial de sesiones para auditoría y reanudación
     try {
