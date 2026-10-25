@@ -40,6 +40,8 @@ Forma parte del ecosistema del sistema contable **Kattxo**.
 - **Auto-Aprobación de Descargas Masivas (`acceptDanger`):** Elimina interrupciones por advertencias del navegador ante descargas consecutivas de decenas de archivos desde el dominio oficial del SRI.
 - **Notificaciones Nativas del Sistema (`chrome.notifications`):** Notificación emergente al finalizar cada lote, permitiendo al usuario realizar otras tareas en su computadora mientras la extensión trabaja en segundo plano.
 - **Panel de Opciones e Historial (`options.html`):** Registro persistente de sesiones de descargas en `chrome.storage.local`, visualización tabular de lotes y **botón de reanudación automática** para procesar comprobantes pendientes o fallidos si la sesión del SRI se corta. Incluye configuración de directorio base y tiempos de espera de cortesía.
+- **Circuit Breaker ante Caída de Sesión:** Monitoreo inteligente de fallos consecutivos; al registrar 3 fallos seguidos (caída silenciosa de sesión en el SRI), interrumpe el bucle de inmediato de forma segura, guarda las claves pendientes en storage y notifica al usuario.
+- **Banner de Auto-Reanudación Inteligente:** Al ingresar al portal del SRI tras una interrupción o cierre de pestaña, el panel flotante detecta automáticamente el lote incompleto y despliega una barra interactiva para continuar la descarga con un solo clic.
 - **Panel de Control Dual (Popup + In-Page):** Disponible tanto desde el icono de extensiones de Chrome como mediante el widget flotante inyectado en el portal.
 
 ---

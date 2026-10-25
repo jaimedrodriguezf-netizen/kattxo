@@ -12,8 +12,8 @@ Mecanismos de alta resiliencia para la extensión Kattxo SRI: detección de caí
 ## Tasks
 - [x] T1 (S1): Métodos de persistencia de auto-reanudación en historyManager.ts y tests unitarios. (23359f0)
 - [x] T2 (S3): Componente de banner de auto-reanudación en InPageWidget y tests. (5332451)
-- [/] T3 (S2, S4): Lógica de circuit breaker de 3 fallos consecutivos y verificación al inicio en content/index.ts. (inline)
-- T4 (S5): Verificación integral, tests completos de la suite y build de producción en dist/. (inline)
+- [x] T3 (S2, S4): Lógica de circuit breaker de 3 fallos consecutivos y verificación al inicio en content/index.ts. (2acb4fe)
+- [x] T4 (S5): Verificación integral, tests completos de la suite y build de producción en dist/. (23359f0, 5332451, 2acb4fe)
 
 ## Log
 - L1: Usuario confirma: "si dale" tras la auditoría con REA para implementar el circuit breaker y el banner de auto-reanudación.
