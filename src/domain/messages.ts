@@ -14,7 +14,8 @@ export type ExtensionMessageType =
   | 'RESUME_IN_PAGE_DOWNLOAD'
   | 'DOWNLOAD_PROGRESS_UPDATE'
   | 'DOWNLOAD_SRI_TXT_REQUEST'
-  | 'BATCH_COMPLETED_NOTIFICATION';
+  | 'BATCH_COMPLETED_NOTIFICATION'
+  | 'OPEN_DOWNLOADS_FOLDER';
 
 export interface BaseMessage {
   type: ExtensionMessageType;
@@ -101,6 +102,10 @@ export interface BatchCompletedNotificationMessage extends BaseMessage {
   };
 }
 
+export interface OpenDownloadsFolderMessage extends BaseMessage {
+  type: 'OPEN_DOWNLOADS_FOLDER';
+}
+
 export type ExtensionMessage =
   | RetentionsDetectedMessage
   | StartDownloadQueueMessage
@@ -115,7 +120,8 @@ export type ExtensionMessage =
   | ResumeInPageDownloadMessage
   | DownloadProgressUpdateMessage
   | DownloadSriTxtRequestMessage
-  | BatchCompletedNotificationMessage;
+  | BatchCompletedNotificationMessage
+  | OpenDownloadsFolderMessage;
 
 export interface MessageResponse<T = unknown> {
   success: boolean;

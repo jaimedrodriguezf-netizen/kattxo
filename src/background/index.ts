@@ -110,6 +110,14 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
           break;
         }
 
+        case 'OPEN_DOWNLOADS_FOLDER': {
+          if (typeof chrome !== 'undefined' && chrome.downloads?.showDefaultFolder) {
+            chrome.downloads.showDefaultFolder();
+          }
+          sendResponse({ success: true });
+          break;
+        }
+
         default:
           break;
       }
