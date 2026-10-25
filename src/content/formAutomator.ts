@@ -219,3 +219,43 @@ export function goToNextPage(doc: Document): boolean {
   }
   return false;
 }
+
+/**
+ * Localiza y dispara el enlace o botón oficial de descarga del reporte TXT en el portal SRI.
+ * Busca por ID (#frmPrincipal:lnkTxtlistado, a[id*="lnkTxtlistado" i]) o por texto ('descargar listado', 'reporte txt').
+ */
+export async function triggerSriTxtReportDownload(doc: Document): Promise<boolean> {
+  if (!doc) return false;
+
+  // 1. Búsqueda directa por selector de ID exacto o parcial
+  const exactButton = doc.querySelector<HTMLElement>(
+    '#frmPrincipal\\:lnkTxtlistado, a[id*="lnkTxtlistado" i], button[id*="lnkTxtlistado" i], input[id*="lnkTxtlistado" i]'
+  );
+
+  if (exactButton) {
+    exactButton.click();
+    return true;
+  }
+
+  // 2. Búsqueda por texto visible o atributo value/title
+  const candidateElements = Array.from(
+    doc.querySelectorAll<HTMLElement>('a, button, input[type="button"], input[type="submit"]')
+  );
+
+  for (const el of candidateElements) {
+    const text = (
+      el.textContent ||
+      el.getAttribute('value') ||
+      el.getAttribute('title') ||
+      ''
+    ).toLowerCase();
+
+    if (text.includes('descargar listado') || text.includes('reporte txt')) {
+      el.click();
+      return true;
+    }
+  }
+
+  return false;
+}
+

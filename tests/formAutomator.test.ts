@@ -5,6 +5,7 @@ import {
   triggerSriSearch,
   getPaginatorState,
   goToNextPage,
+  triggerSriTxtReportDownload,
   SriQueryParams,
 } from '../src/content/formAutomator';
 
@@ -151,6 +152,73 @@ describe('SRI Form Automator & Paginator', () => {
       const success = goToNextPage(document);
       expect(success).toBe(true);
       expect(clicked).toBe(true);
+    });
+  });
+
+  describe('triggerSriTxtReportDownload', () => {
+    it('clicks the link by exact ID #frmPrincipal:lnkTxtlistado', async () => {
+      document.body.innerHTML = `
+        <a id="frmPrincipal:lnkTxtlistado" href="#">Descargar Listado</a>
+      `;
+      let clicked = false;
+      document.getElementById('frmPrincipal:lnkTxtlistado')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        clicked = true;
+      });
+
+      const result = await triggerSriTxtReportDownload(document);
+      expect(result).toBe(true);
+      expect(clicked).toBe(true);
+    });
+
+    it('clicks link/button matching partial ID lnkTxtlistado', async () => {
+      document.body.innerHTML = `
+        <a id="someForm:lnkTxtlistado_button" href="#">Exportar</a>
+      `;
+      let clicked = false;
+      document.getElementById('someForm:lnkTxtlistado_button')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        clicked = true;
+      });
+
+      const result = await triggerSriTxtReportDownload(document);
+      expect(result).toBe(true);
+      expect(clicked).toBe(true);
+    });
+
+    it('clicks element by text containing "descargar listado"', async () => {
+      document.body.innerHTML = `
+        <button type="button" class="btn">Descargar Listado de Comprobantes</button>
+      `;
+      let clicked = false;
+      document.querySelector('button')?.addEventListener('click', () => {
+        clicked = true;
+      });
+
+      const result = await triggerSriTxtReportDownload(document);
+      expect(result).toBe(true);
+      expect(clicked).toBe(true);
+    });
+
+    it('clicks element by text containing "reporte txt"', async () => {
+      document.body.innerHTML = `
+        <a href="#" class="btn-export">Reporte TXT</a>
+      `;
+      let clicked = false;
+      document.querySelector('a')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        clicked = true;
+      });
+
+      const result = await triggerSriTxtReportDownload(document);
+      expect(result).toBe(true);
+      expect(clicked).toBe(true);
+    });
+
+    it('returns false when no matching element is present', async () => {
+      document.body.innerHTML = `<div><p>No buttons here</p></div>`;
+      const result = await triggerSriTxtReportDownload(document);
+      expect(result).toBe(false);
     });
   });
 });
