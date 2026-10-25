@@ -34,6 +34,7 @@ export function vouchersToCsv(vouchers: SriVoucher[]): string {
     'Identificación Receptor',
     'Razón Social Receptor',
     'Número Comprobante',
+    'Total Importe',
     'Clave de Acceso',
     'Estado',
   ];
@@ -54,6 +55,7 @@ export function vouchersToCsv(vouchers: SriVoucher[]): string {
       sanitizeCsvCell(v.identificacionSujetoRetenido),
       sanitizeCsvCell(v.razonSocialReceptor),
       sanitizeCsvCell(v.numeroComprobante),
+      sanitizeCsvCell(v.totalImporte !== undefined ? v.totalImporte.toFixed(2) : ''),
       sanitizeCsvCell(v.claveAcceso),
       sanitizeCsvCell(v.estado),
     ].join(';');

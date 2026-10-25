@@ -33,7 +33,8 @@ describe('CSV Exporter', () => {
   });
 
   describe('vouchersToCsv', () => {
-    const headerRow = 'Fecha Emisi\u00f3n;Tipo Comprobante;Nombre Tipo;RUC Emisor;Raz\u00f3n Social Emisor;Identificaci\u00f3n Receptor;Raz\u00f3n Social Receptor;N\u00famero Comprobante;Clave de Acceso;Estado';
+    const headerRow =
+      'Fecha Emisi\u00f3n;Tipo Comprobante;Nombre Tipo;RUC Emisor;Raz\u00f3n Social Emisor;Identificaci\u00f3n Receptor;Raz\u00f3n Social Receptor;N\u00famero Comprobante;Total Importe;Clave de Acceso;Estado';
 
     it('starts with UTF-8 BOM (\\uFEFF)', () => {
       const csv = vouchersToCsv([]);
@@ -66,7 +67,8 @@ describe('CSV Exporter', () => {
       expect(lines.length).toBe(2);
       expect(lines[0]).toBe(headerRow);
 
-      const expectedRow = '01/01/2024;01;Factura;1790012345001;COMERCIAL ABC CIA. LTDA.;1712345678;JUAN PEREZ;001-001-000000001;0101202401179001234500120010010000000011234567813;AUTORIZADO';
+      const expectedRow =
+        '01/01/2024;01;Factura;1790012345001;COMERCIAL ABC CIA. LTDA.;1712345678;JUAN PEREZ;001-001-000000001;;0101202401179001234500120010010000000011234567813;AUTORIZADO';
       expect(lines[1]).toBe(expectedRow);
     });
 
@@ -87,7 +89,8 @@ describe('CSV Exporter', () => {
       expect(fields[2]).toBe('Retencion');
       expect(fields[5]).toBe(''); // identificacionSujetoRetenido undefined
       expect(fields[6]).toBe(''); // razonSocialReceptor undefined
-      expect(fields[9]).toBe(''); // estado undefined
+      expect(fields[8]).toBe(''); // totalImporte undefined
+      expect(fields[10]).toBe(''); // estado undefined
     });
 
     it('sanitizes fields containing quotes, semicolons, and newlines', () => {
