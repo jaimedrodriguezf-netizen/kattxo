@@ -157,6 +157,44 @@ describe('InPageWidget (Shadow DOM Floating Panel)', () => {
     });
   });
 
+  it('displays auto-resume banner and triggers resume callback on click', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const banner = shadow.querySelector<HTMLElement>('.kattxo-resume-banner')!;
+
+    expect(banner.style.display).toBe('none');
+
+    let resumeClicked = false;
+    let dismissClicked = false;
+
+    widget.showResumeBanner(
+      12,
+      () => {
+        resumeClicked = true;
+      },
+      () => {
+        dismissClicked = true;
+      }
+    );
+
+    expect(banner.style.display).not.toBe('none');
+    expect(banner.textContent).toContain('12');
+
+    // Click resume
+    const resumeBtn = shadow.querySelector<HTMLButtonElement>('.kattxo-btn-resume-action')!;
+    resumeBtn.click();
+    expect(resumeClicked).toBe(true);
+
+    // Click dismiss
+    const dismissBtn = shadow.querySelector<HTMLButtonElement>('.kattxo-btn-dismiss-action')!;
+    dismissBtn.click();
+    expect(dismissClicked).toBe(true);
+    expect(banner.style.display).toBe('none');
+  });
+
   it('does not create duplicate hosts if mounted multiple times', () => {
     const widget = new InPageWidget();
     widget.mount(document.body);

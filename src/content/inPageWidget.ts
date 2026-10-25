@@ -28,6 +28,8 @@ export class InPageWidget {
   private shadow: ShadowRoot | null = null;
   private isMinimized = false;
   private options: InPageWidgetOptions;
+  private resumeCallback?: () => void;
+  private dismissCallback?: () => void;
 
   constructor(options: InPageWidgetOptions = {}) {
     this.options = options;
@@ -145,6 +147,50 @@ export class InPageWidget {
           color: #0f172a;
         }
 
+        .kattxo-resume-banner {
+          background: #fef3c7;
+          border: 1px solid #fde68a;
+          border-radius: 8px;
+          padding: 8px 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          color: #92400e;
+          font-size: 11.5px;
+        }
+        .kattxo-resume-info {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-weight: 600;
+        }
+        .kattxo-resume-actions {
+          display: flex;
+          gap: 6px;
+          align-items: center;
+        }
+        .kattxo-btn-resume-action {
+          background: #d97706;
+          color: #ffffff;
+          border: none;
+          border-radius: 4px;
+          padding: 3px 8px;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .kattxo-btn-resume-action:hover {
+          background: #b45309;
+        }
+        .kattxo-btn-dismiss-action {
+          background: transparent;
+          border: none;
+          color: #92400e;
+          cursor: pointer;
+          font-size: 12px;
+          padding: 2px 4px;
+        }
+
         .kattxo-form-group {
           display: flex;
           flex-direction: column;
@@ -247,6 +293,17 @@ export class InPageWidget {
           <div class="kattxo-taxpayer-badge">
             <span class="kattxo-taxpayer-ruc">RUC: No detectado</span>
             <div class="kattxo-taxpayer-name">Navegando en portal SRI</div>
+          </div>
+
+          <div class="kattxo-resume-banner" style="display: none;">
+            <div class="kattxo-resume-info">
+              <span>⚡</span>
+              <span>Descarga previa pendiente (<strong class="kattxo-resume-count">0</strong> comprobantes)</span>
+            </div>
+            <div class="kattxo-resume-actions">
+              <button type="button" class="kattxo-btn-resume-action">Reanudar ahora</button>
+              <button type="button" class="kattxo-btn-dismiss-action" title="Descartar">✕</button>
+            </div>
           </div>
 
           <div class="kattxo-form-group">
@@ -378,6 +435,39 @@ export class InPageWidget {
         this.options.onDownloadTxtReport();
       }
     });
+
+    const bannerResumeBtn = this.shadow.querySelector('.kattxo-btn-resume-action');
+    bannerResumeBtn?.addEventListener('click', () => {
+      if (this.resumeCallback) {
+        this.resumeCallback();
+      }
+    });
+
+    const bannerDismissBtn = this.shadow.querySelector('.kattxo-btn-dismiss-action');
+    bannerDismissBtn?.addEventListener('click', () => {
+      this.hideResumeBanner();
+      if (this.dismissCallback) {
+        this.dismissCallback();
+      }
+    });
+  }
+
+  public hideResumeBanner(): void {
+    if (!this.shadow) return;
+    const banner = this.shadow.querySelector<HTMLElement>('.kattxo-resume-banner');
+    if (banner) banner.style.display = 'none';
+  }
+
+  public showResumeBanner(pendingCount: number, onResumeClick: () => void, onDismissClick?: () => void): void {
+    if (!this.shadow) return;
+    this.resumeCallback = onResumeClick;
+    this.dismissCallback = onDismissClick;
+
+    const banner = this.shadow.querySelector<HTMLElement>('.kattxo-resume-banner');
+    const countEl = this.shadow.querySelector('.kattxo-resume-count');
+
+    if (countEl) countEl.textContent = pendingCount.toString();
+    if (banner) banner.style.display = 'flex';
   }
 
   public setTaxpayerProfile(profile: TaxpayerProfile): void {
