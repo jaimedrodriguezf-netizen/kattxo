@@ -90,6 +90,62 @@ describe('SRI Form Automator & Paginator', () => {
       expect(selDia.value).toBe('15');
       expect(selTipo.value).toBe('1');
     });
+
+    it('populates comprobantesEmitidos.jsf calendar text inputs (DD/MM/YYYY)', () => {
+      document.body.innerHTML = `
+        <form id="frmPrincipal">
+          <input type="text" id="frmPrincipal:calendarFechaDesde_input" />
+          <input type="text" id="frmPrincipal:calendarFechaHasta_input" />
+          <input type="text" id="frmPrincipal:txtParametro" />
+          <select id="frmPrincipal:cmbTipoComprobante">
+            <option value="1">FACTURA</option>
+          </select>
+        </form>
+      `;
+
+      let inputDispatched = false;
+      const inputDesde = document.getElementById('frmPrincipal:calendarFechaDesde_input') as HTMLInputElement;
+      inputDesde.addEventListener('input', () => {
+        inputDispatched = true;
+      });
+
+      const params: SriQueryParams = {
+        dateFrom: '2024-08-01',
+        dateTo: '2024-08-15',
+        documentType: 'FACTURA',
+        parametroRuc: '1790011223001',
+      };
+
+      const result = fillSriQueryForm(document, params);
+      expect(result).toBe(true);
+
+      expect(inputDesde.value).toBe('01/08/2024');
+      const inputHasta = document.getElementById('frmPrincipal:calendarFechaHasta_input') as HTMLInputElement;
+      expect(inputHasta.value).toBe('15/08/2024');
+
+      const txtParametro = document.getElementById('frmPrincipal:txtParametro') as HTMLInputElement;
+      expect(txtParametro.value).toBe('1790011223001');
+
+      expect(inputDispatched).toBe(true);
+    });
+
+    it('formats year/month/day components to DD/MM/YYYY for calendar inputs when dateFrom is not given', () => {
+      document.body.innerHTML = `
+        <form id="frmPrincipal">
+          <input type="text" id="frmPrincipal:calendarFechaDesde_input" />
+        </form>
+      `;
+
+      const params: SriQueryParams = {
+        year: '2024',
+        month: '5',
+        day: '7',
+      };
+
+      fillSriQueryForm(document, params);
+      const inputDesde = document.getElementById('frmPrincipal:calendarFechaDesde_input') as HTMLInputElement;
+      expect(inputDesde.value).toBe('07/05/2024');
+    });
   });
 
   describe('triggerSriSearch', () => {

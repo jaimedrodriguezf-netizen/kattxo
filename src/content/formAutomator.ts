@@ -2,14 +2,55 @@ export interface SriQueryParams {
   year?: string | number;
   month?: string | number;
   day?: string | number;
+  dateFrom?: string; // DD/MM/YYYY o YYYY-MM-DD
+  dateTo?: string; // DD/MM/YYYY o YYYY-MM-DD
   documentType?: string;
   estadoAutorizacion?: string;
+  parametroRuc?: string;
 }
 
 export interface PaginatorState {
   currentPage: number;
   totalPages: number;
   hasNextPage: boolean;
+}
+
+/**
+ * Convierte una fecha en formato YYYY-MM-DD o componentes sueltos a formato DD/MM/YYYY del SRI.
+ */
+export function toSriDateFormat(
+  dateOrComponents: string | { year?: string | number; month?: string | number; day?: string | number }
+): string {
+  if (typeof dateOrComponents === 'string') {
+    const trimmed = dateOrComponents.trim();
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+      return trimmed;
+    }
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (isoMatch) {
+      const pad = (n: string | number) => (Number(n) < 10 ? `0${Number(n)}` : `${n}`);
+      return `${pad(isoMatch[3])}/${pad(isoMatch[2])}/${isoMatch[1]}`;
+    }
+    return trimmed;
+  }
+
+  const { year, month, day } = dateOrComponents;
+  if (!year) return '';
+  const pad = (n?: string | number) => {
+    if (n === undefined || n === '') return '01';
+    return Number(n) < 10 ? `0${Number(n)}` : `${n}`;
+  };
+
+  return `${pad(day)}/${pad(month)}/${year}`;
+}
+
+/**
+ * Rellena un input de texto y dispara los eventos input y change.
+ */
+function setInputText(inputEl: HTMLInputElement, value: string): void {
+  inputEl.value = value;
+  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+  inputEl.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 /**
@@ -61,11 +102,55 @@ function findSelectElement(doc: Document, selectors: string[]): HTMLSelectElemen
 
 /**
  * Rellena los campos del formulario de consulta del SRI en Línea.
+ * Compatible con:
+ * - Comprobantes Recibidos (dropdowns de año, mes, día)
+ * - Comprobantes Emitidos (calendarFechaDesde_input y calendarFechaHasta_input en DD/MM/YYYY)
  */
 export function fillSriQueryForm(doc: Document, params: SriQueryParams): boolean {
   let anyFilled = false;
 
-  // 1. Año
+  // 1. Detección de inputs de calendario de Comprobantes Emitidos
+  const fechaDesdeInput = doc.querySelector<HTMLInputElement>(
+    '#frmPrincipal\\:calendarFechaDesde_input, input[id*="calendarFechaDesde" i]'
+  );
+  const fechaHastaInput = doc.querySelector<HTMLInputElement>(
+    '#frmPrincipal\\:calendarFechaHasta_input, input[id*="calendarFechaHasta" i]'
+  );
+
+  if (fechaDesdeInput) {
+    const formattedDesde = params.dateFrom
+      ? toSriDateFormat(params.dateFrom)
+      : toSriDateFormat({ year: params.year, month: params.month, day: params.day });
+    if (formattedDesde) {
+      setInputText(fechaDesdeInput, formattedDesde);
+      anyFilled = true;
+    }
+  }
+
+  if (fechaHastaInput) {
+    const formattedHasta = params.dateTo
+      ? toSriDateFormat(params.dateTo)
+      : params.dateFrom
+      ? toSriDateFormat(params.dateFrom)
+      : toSriDateFormat({ year: params.year, month: params.month, day: params.day });
+    if (formattedHasta) {
+      setInputText(fechaHastaInput, formattedHasta);
+      anyFilled = true;
+    }
+  }
+
+  // 2. Parámetro RUC receptor en Comprobantes Emitidos
+  if (params.parametroRuc) {
+    const parametroInput = doc.querySelector<HTMLInputElement>(
+      '#frmPrincipal\\:txtParametro, input[id*="txtParametro" i]'
+    );
+    if (parametroInput) {
+      setInputText(parametroInput, params.parametroRuc.trim());
+      anyFilled = true;
+    }
+  }
+
+  // 3. Dropdowns de Comprobantes Recibidos: Año
   if (params.year) {
     const anoSelect = findSelectElement(doc, [
       '#frmPrincipal\\:ano',
