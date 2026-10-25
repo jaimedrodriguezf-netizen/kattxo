@@ -1,10 +1,10 @@
-import { RetentionVoucher } from '../domain/types';
-import { isValidClaveAcceso } from '../domain/validators';
+import { SriVoucher, RetentionVoucher, TaxpayerProfile, VoucherCategory } from '../domain/types';
+import { isValidClaveAcceso, isValidRuc } from '../domain/validators';
 
 /**
  * Descompone una clave de acceso de 49 dígitos del SRI en sus metadatos intrínsecos.
  */
-export function parseClaveAcceso(key: string): RetentionVoucher | null {
+export function parseClaveAcceso(key: string): SriVoucher | null {
   if (!isValidClaveAcceso(key)) {
     return null;
   }
@@ -44,58 +44,155 @@ export function findClavesInText(text: string): string[] {
 }
 
 /**
- * Extrae comprobantes de retención presentes en el DOM del SRI en Línea.
- * Robusto ante RichFaces, PrimeFaces, tablas JSF y enlaces mojarra.jsfcljs.
+ * Extrae el perfil del contribuyente (RUC y Razón Social) del DOM del SRI en Línea.
  */
-export function extractRetentionsFromDom(doc: Document = document): RetentionVoucher[] {
-  const vouchersMap = new Map<string, RetentionVoucher>();
+export function extractTaxpayerProfileFromDom(doc: Document = document): TaxpayerProfile | null {
+  // 1. Selector específico de la página de perfil (/contribuyente/perfil)
+  const nameEl = doc.querySelector('label.nombre-contribuyente, label.titulo-campo.nombre-contribuyente, [data-role="taxpayer-name"]');
+  const rucEl = doc.querySelector('label.titulo-perfil, label.ruc-contribuyente, [data-role="taxpayer-ruc"]');
+
+  if (nameEl && rucEl) {
+    const rawRuc = (rucEl.textContent || '').trim();
+    const rucMatch = rawRuc.match(/\d{13}/);
+    if (rucMatch) {
+      return {
+        ruc: rucMatch[0],
+        razonSocial: (nameEl.textContent || '').trim(),
+      };
+    }
+  }
+
+  // 2. Búsqueda en barras de navegación, headers o badges de usuario
+  const candidateElements = doc.querySelectorAll(
+    '.navbar-header, .user-info, .nombre-usuario, header, #sri-header, #panelPerfil'
+  );
+
+  for (const el of Array.from(candidateElements)) {
+    const text = el.textContent || '';
+    // Coincidencia tipo "RUC: 0190000000001 - NOMBRE EMPRESA" o similar
+    const rucMatch = text.match(/RUC:?\s*(\d{13})(?:\s*-\s*([^<\n\r]+))?/i);
+    if (rucMatch) {
+      return {
+        ruc: rucMatch[1],
+        razonSocial: rucMatch[2] ? rucMatch[2].trim() : undefined,
+      };
+    }
+  }
+
+  // 3. Barrido general de texto con patrón RUC
+  const bodyText = doc.body?.textContent || '';
+  const genericMatch = bodyText.match(/RUC:?\s*(\d{13})(?:\s*-\s*([A-Z0-9\s.,-]+))?/i);
+  if (genericMatch && isValidRuc(genericMatch[1])) {
+    return {
+      ruc: genericMatch[1],
+      razonSocial: genericMatch[2] ? genericMatch[2].trim() : undefined,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Extrae comprobantes electrónicos de cualquier tipo presentes en el DOM del SRI en Línea.
+ * Robusto ante RichFaces, PrimeFaces, tablas JSF y enlaces mojarra.jsfcljs.
+ * 
+ * @param doc Documento DOM a escanear.
+ * @param filterType Código de tipo ('01', '07', etc.) o null/'ALL' para todos.
+ */
+export function extractVouchersFromDom(
+  doc: Document = document,
+  filterType?: string | null
+): SriVoucher[] {
+  const vouchersMap = new Map<string, SriVoucher>();
+
+  // Detectar categoría general de la página o tabla
+  const pageUrl = doc.location?.href || '';
+  let defaultCategory: VoucherCategory = 'recibidos';
+  if (pageUrl.includes('/emitidos/') || doc.body?.textContent?.toLowerCase().includes('comprobantes emitidos')) {
+    defaultCategory = 'emitidos';
+  }
 
   // 1. Estrategia Tablas (PrimeFaces / RichFaces / Estándar HTML)
-  const rows = doc.querySelectorAll('table tbody tr, table tr');
-  rows.forEach((row) => {
-    const cells = Array.from(row.querySelectorAll('td'));
-    const cellsText = cells.map((c) => (c as HTMLElement).innerText || c.textContent || '').join(' ');
-    const rowText = (row as HTMLElement).innerText || row.textContent || '';
-    const combinedText = `${cellsText} ${rowText}`;
-    const keysInRow = findClavesInText(combinedText);
+  const tables = doc.querySelectorAll('table');
+  tables.forEach((table) => {
+    // Determinar categoría por encabezados de la tabla
+    const headerText = (table.querySelector('thead')?.textContent || '').toLowerCase();
+    const isEmitidosTable =
+      headerText.includes('receptor') ||
+      headerText.includes('cliente') ||
+      defaultCategory === 'emitidos';
+    const category: VoucherCategory = isEmitidosTable ? 'emitidos' : 'recibidos';
 
-    // Buscar enlace específico de descarga XML (ej. Mojarra id="...:lnkXml")
-    let xmlLinkId: string | undefined;
-    const links = row.querySelectorAll('a, button');
-    links.forEach((link) => {
-      const id = link.getAttribute('id') || '';
-      const href = link.getAttribute('href') || '';
-      const onclick = link.getAttribute('onclick') || '';
-      const title = link.getAttribute('title') || '';
-      const hasXmlImg = !!link.querySelector('img[src*="xml" i]');
+    const rows = table.querySelectorAll('tbody tr, tr');
+    rows.forEach((row) => {
+      const cells = Array.from(row.querySelectorAll('td'));
+      const cellsText = cells.map((c) => (c as HTMLElement).innerText || c.textContent || '').join(' ');
+      const rowText = (row as HTMLElement).innerText || row.textContent || '';
+      const combinedText = `${cellsText} ${rowText}`;
+      const keysInRow = findClavesInText(combinedText);
 
-      if (
-        id.includes('lnkXml') ||
-        id.toLowerCase().includes('xml') ||
-        onclick.includes('lnkXml') ||
-        onclick.toLowerCase().includes('xml') ||
-        title.toLowerCase().includes('xml') ||
-        hasXmlImg
-      ) {
-        xmlLinkId = id;
-      }
+      // Buscar enlaces de XML y PDF/RIDE en la fila
+      let xmlLinkId: string | undefined;
+      let pdfLinkId: string | undefined;
 
-      const dataAttr = link.getAttribute('data-clave') || link.getAttribute('data-id') || '';
-      const combinedAttrs = `${href} ${onclick} ${dataAttr} ${id}`;
-      const urlKeys = findClavesInText(combinedAttrs);
-      keysInRow.push(...urlKeys);
-    });
+      const links = row.querySelectorAll('a, button');
+      links.forEach((link) => {
+        const id = link.getAttribute('id') || '';
+        const href = link.getAttribute('href') || '';
+        const onclick = link.getAttribute('onclick') || '';
+        const title = (link.getAttribute('title') || '').toLowerCase();
+        const hasXmlImg = !!link.querySelector('img[src*="xml" i]');
+        const hasPdfImg = !!link.querySelector('img[src*="pdf" i]');
 
-    const uniqueRowKeys = Array.from(new Set(keysInRow));
-
-    uniqueRowKeys.forEach((key) => {
-      const parsed = parseClaveAcceso(key);
-      if (parsed && parsed.tipoComprobante === '07') {
-        if (xmlLinkId) {
-          parsed.elementId = xmlLinkId;
+        // Detección XML
+        if (
+          id.includes('lnkXml') ||
+          id.toLowerCase().includes('xml') ||
+          onclick.includes('lnkXml') ||
+          onclick.toLowerCase().includes('xml') ||
+          title.includes('xml') ||
+          hasXmlImg
+        ) {
+          xmlLinkId = id;
         }
 
-        // Enriquecer razón social examinando celdas
+        // Detección PDF / RIDE
+        if (
+          id.includes('lnkPdf') ||
+          id.includes('lnkRide') ||
+          id.toLowerCase().includes('pdf') ||
+          id.toLowerCase().includes('ride') ||
+          onclick.includes('lnkPdf') ||
+          onclick.includes('lnkRide') ||
+          title.includes('pdf') ||
+          title.includes('ride') ||
+          hasPdfImg
+        ) {
+          pdfLinkId = id;
+        }
+
+        const dataAttr = link.getAttribute('data-clave') || link.getAttribute('data-id') || '';
+        const combinedAttrs = `${href} ${onclick} ${dataAttr} ${id}`;
+        const urlKeys = findClavesInText(combinedAttrs);
+        keysInRow.push(...urlKeys);
+      });
+
+      const uniqueRowKeys = Array.from(new Set(keysInRow));
+
+      uniqueRowKeys.forEach((key) => {
+        const parsed = parseClaveAcceso(key);
+        if (!parsed) return;
+
+        // Filtrar por tipo si se solicitó uno específico
+        if (filterType && filterType !== 'ALL' && parsed.tipoComprobante !== filterType) {
+          return;
+        }
+
+        parsed.categoria = category;
+        if (xmlLinkId) parsed.elementId = xmlLinkId;
+        if (pdfLinkId) parsed.elementPdfId = pdfLinkId;
+
+        // Enriquecer razón social / receptor examinando celdas de la fila
         if (cells.length > 0) {
           for (const cell of cells) {
             const cellText = ((cell as HTMLElement).innerText || cell.textContent || '').trim();
@@ -104,22 +201,27 @@ export function extractRetentionsFromDom(doc: Document = document): RetentionVou
               !/^\d+$/.test(cellText) &&
               !/^\d{2}\/\d{2}\/\d{4}$/.test(cellText) &&
               !cellText.includes(key) &&
+              !cellText.toLowerCase().includes('factura') &&
               !cellText.toLowerCase().includes('retención') &&
               !cellText.toLowerCase().includes('retencion') &&
               !cellText.toLowerCase().includes('autorizado')
             ) {
-              parsed.razonSocialEmisor = cellText;
+              if (category === 'emitidos') {
+                parsed.razonSocialReceptor = cellText;
+              } else {
+                parsed.razonSocialEmisor = cellText;
+              }
               break;
             }
           }
         }
 
         vouchersMap.set(key, parsed);
-      }
+      });
     });
   });
 
-  // 2. Estrategia Enlaces sueltos (botones de descarga de XML fuera de tablas)
+  // 2. Estrategia Enlaces sueltos (botones de descarga fuera de tablas estándar)
   const allLinks = doc.querySelectorAll('a, button');
   allLinks.forEach((el) => {
     const id = el.getAttribute('id') || '';
@@ -130,27 +232,37 @@ export function extractRetentionsFromDom(doc: Document = document): RetentionVou
     keys.forEach((key) => {
       if (!vouchersMap.has(key)) {
         const parsed = parseClaveAcceso(key);
-        if (parsed && parsed.tipoComprobante === '07') {
+        if (parsed) {
+          if (filterType && filterType !== 'ALL' && parsed.tipoComprobante !== filterType) {
+            return;
+          }
           if (id) parsed.elementId = id;
+          parsed.categoria = defaultCategory;
           vouchersMap.set(key, parsed);
         }
       }
     });
   });
 
-  // 3. Estrategia Barrido General del Body (innerText + textContent)
-  const bodyEl = doc.body as HTMLElement | null;
-  if (bodyEl) {
-    const fullText = `${bodyEl.innerText || ''} ${bodyEl.textContent || ''}`;
-    const generalKeys = findClavesInText(fullText);
-    generalKeys.forEach((key) => {
-      if (!vouchersMap.has(key)) {
-        const parsed = parseClaveAcceso(key);
-        if (parsed && parsed.tipoComprobante === '07') {
-          vouchersMap.set(key, parsed);
+  // 3. Estrategia Barrido General del Body si aún no hay resultados
+  if (vouchersMap.size === 0) {
+    const bodyEl = doc.body as HTMLElement | null;
+    if (bodyEl) {
+      const fullText = `${bodyEl.innerText || ''} ${bodyEl.textContent || ''}`;
+      const generalKeys = findClavesInText(fullText);
+      generalKeys.forEach((key) => {
+        if (!vouchersMap.has(key)) {
+          const parsed = parseClaveAcceso(key);
+          if (parsed) {
+            if (filterType && filterType !== 'ALL' && parsed.tipoComprobante !== filterType) {
+              return;
+            }
+            parsed.categoria = defaultCategory;
+            vouchersMap.set(key, parsed);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   // 4. Asignar enlaces XML por índice si algún comprobante quedó sin elementId
@@ -166,13 +278,13 @@ export function extractRetentionsFromDom(doc: Document = document): RetentionVou
     });
   }
 
-  // 5. Estrategia Iframes embebidos en el mismo dominio
+  // 5. Estrategia Iframes embebidos
   const iframes = doc.querySelectorAll('iframe');
   iframes.forEach((iframe) => {
     try {
       const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
       if (iframeDoc && iframeDoc !== doc) {
-        const iframeVouchers = extractRetentionsFromDom(iframeDoc);
+        const iframeVouchers = extractVouchersFromDom(iframeDoc, filterType);
         iframeVouchers.forEach((v) => {
           if (!vouchersMap.has(v.claveAcceso)) {
             vouchersMap.set(v.claveAcceso, v);
@@ -185,4 +297,11 @@ export function extractRetentionsFromDom(doc: Document = document): RetentionVou
   });
 
   return Array.from(vouchersMap.values());
+}
+
+/**
+ * Función de compatibilidad hacia atrás: extrae comprobantes de retención ('07').
+ */
+export function extractRetentionsFromDom(doc: Document = document): RetentionVoucher[] {
+  return extractVouchersFromDom(doc, '07');
 }

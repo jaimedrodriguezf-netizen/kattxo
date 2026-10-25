@@ -13,8 +13,8 @@ Extensión de navegador (Manifest V3) para descarga masiva de todos los tipos de
 - S8: Suite de pruebas unitarias automatizadas con Vitest y build dual para Manifest V3.
 
 ## Tasks
-- T1 (S1, S2): Modelo de dominio universal (SriVoucher, SriDocumentType) y enrutador jerárquico de descargas en validators.ts con tests unitarios. (inline)
-- T2 (S3, S4): Detección de perfil de contribuyente y parser universal para comprobantes recibidos y emitidos con tests. (inline)
+- [x] T1 (S1, S2): Modelo de dominio universal (SriVoucher, SriDocumentType) y enrutador jerárquico de descargas en validators.ts con tests unitarios. (5e89150)
+- [/] T2 (S3, S4): Detección de perfil de contribuyente y parser universal para comprobantes recibidos y emitidos con tests. (inline)
 - T3 (S5, S6): Motor de automatización de formularios JSF y paginador RichFaces en content script. (inline)
 - T4 (S7): Componente de panel flotante In-Page (Shadow DOM) con barra de progreso, controles y canal de mensajería. (inline)
 - T5 (S1, S2): Soporte opcional para descarga de RIDE (PDF) y orquestación en background worker. (inline)

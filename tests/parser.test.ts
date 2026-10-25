@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { parseClaveAcceso, extractRetentionsFromDom, findClavesInText } from '../src/content/parser';
+import {
+  parseClaveAcceso,
+  extractRetentionsFromDom,
+  extractVouchersFromDom,
+  extractTaxpayerProfileFromDom,
+  findClavesInText,
+} from '../src/content/parser';
 
 describe('SRI Parser & Clave de Acceso Decomposition', () => {
   const sampleKeyRetencion = '1509202307179001691900120010020000045671234567819';
@@ -141,6 +147,121 @@ describe('SRI Parser & Clave de Acceso Decomposition', () => {
       document.body.innerHTML = `<div><p>No se encontraron resultados para la búsqueda.</p></div>`;
       const vouchers = extractRetentionsFromDom(document);
       expect(vouchers).toEqual([]);
+    });
+  });
+
+  describe('extractVouchersFromDom (Universal Parser)', () => {
+    it('extracts all types of vouchers when filter is null or ALL', () => {
+      document.body.innerHTML = `
+        <table>
+          <tbody>
+            <tr>
+              <td>PROVEEDOR FACTURA S.A.</td>
+              <td>Factura</td>
+              <td>001-001-000000001</td>
+              <td><span>${sampleKeyFactura}</span></td>
+              <td>
+                <a id="frm:tabla:0:lnkXml" title="Descargar XML">XML</a>
+                <a id="frm:tabla:0:lnkPdf" title="Descargar RIDE">PDF</a>
+              </td>
+            </tr>
+            <tr>
+              <td>AGENTE RETENCION C.A.</td>
+              <td>Comprobante de Retención</td>
+              <td>001-002-000004567</td>
+              <td><span>${sampleKeyRetencion}</span></td>
+              <td>
+                <a id="frm:tabla:1:lnkXml" title="Descargar XML">XML</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+
+      const vouchers = extractVouchersFromDom(document);
+      expect(vouchers).toHaveLength(2);
+
+      const factura = vouchers.find((v) => v.tipoComprobante === '01');
+      expect(factura).toBeDefined();
+      expect(factura?.elementId).toBe('frm:tabla:0:lnkXml');
+      expect(factura?.elementPdfId).toBe('frm:tabla:0:lnkPdf');
+
+      const retencion = vouchers.find((v) => v.tipoComprobante === '07');
+      expect(retencion).toBeDefined();
+      expect(retencion?.elementId).toBe('frm:tabla:1:lnkXml');
+    });
+
+    it('filters strictly by document type when filter is provided (e.g. 01 for Factura)', () => {
+      const facturas = extractVouchersFromDom(document, '01');
+      expect(facturas).toHaveLength(1);
+      expect(facturas[0].tipoComprobante).toBe('01');
+    });
+
+    it('detects emitidos category when table header indicates receptor', () => {
+      document.body.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>RUC Receptor</th>
+              <th>Razón Social Receptor</th>
+              <th>Número</th>
+              <th>Clave</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1799999999001</td>
+              <td>CLIENTE FINAL CIA. LTDA.</td>
+              <td>001-001-000000001</td>
+              <td>${sampleKeyFactura}</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+
+      const vouchers = extractVouchersFromDom(document);
+      expect(vouchers).toHaveLength(1);
+      expect(vouchers[0].categoria).toBe('emitidos');
+      expect(vouchers[0].razonSocialReceptor).toBe('CLIENTE FINAL CIA. LTDA.');
+    });
+  });
+
+  describe('extractTaxpayerProfileFromDom', () => {
+    it('extracts taxpayer profile from SRI perfil page DOM classes', () => {
+      document.body.innerHTML = `
+        <div id="sribody">
+          <label class="titulo-campo porciento nombre-contribuyente">
+            JUAN PEREZ COMERCIAL
+          </label>
+          <label class="titulo-campo porciento titulo-perfil animated fadeInUp">
+            1712345678001
+          </label>
+        </div>
+      `;
+
+      const profile = extractTaxpayerProfileFromDom(document);
+      expect(profile).not.toBeNull();
+      expect(profile?.ruc).toBe('1712345678001');
+      expect(profile?.razonSocial).toBe('JUAN PEREZ COMERCIAL');
+    });
+
+    it('extracts taxpayer profile from header / navbar badges', () => {
+      document.body.innerHTML = `
+        <div class="navbar-header">
+          <span class="user-info">RUC: 0190000000001 - KATTXO SOLUCIONES</span>
+        </div>
+      `;
+
+      const profile = extractTaxpayerProfileFromDom(document);
+      expect(profile).not.toBeNull();
+      expect(profile?.ruc).toBe('0190000000001');
+      expect(profile?.razonSocial).toContain('KATTXO SOLUCIONES');
+    });
+
+    it('returns null if no taxpayer data is found in DOM', () => {
+      document.body.innerHTML = '<div>Página no autenticada</div>';
+      const profile = extractTaxpayerProfileFromDom(document);
+      expect(profile).toBeNull();
     });
   });
 });
