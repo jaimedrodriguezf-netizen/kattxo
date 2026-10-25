@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { isValidClaveAcceso, isValidRuc, buildXmlFilename } from '../src/domain/validators';
-import { RetentionVoucher, DEFAULT_QUEUE_CONFIG } from '../src/domain/types';
+import {
+  isValidClaveAcceso,
+  isValidRuc,
+  buildXmlFilename,
+  getSriDocumentTypeName,
+  extractDatePartsFromClaveAcceso,
+  buildSriDownloadPath,
+} from '../src/domain/validators';
+import { RetentionVoucher, SriVoucher, DEFAULT_QUEUE_CONFIG } from '../src/domain/types';
 
 describe('Domain Validators & Helpers', () => {
   const validKey = '0101202407019000000000120010010000000011234567813';
@@ -69,6 +76,71 @@ describe('Domain Validators & Helpers', () => {
     it('handles empty directory cleanly', () => {
       const filename = buildXmlFilename(sampleVoucher, '');
       expect(filename).toBe(`retencion_${validKey}.xml`);
+    });
+  });
+
+  describe('getSriDocumentTypeName', () => {
+    it('maps standard SRI document type codes to human-readable names', () => {
+      expect(getSriDocumentTypeName('01')).toBe('Factura');
+      expect(getSriDocumentTypeName('03')).toBe('Liquidacion_Compra');
+      expect(getSriDocumentTypeName('04')).toBe('Nota_Credito');
+      expect(getSriDocumentTypeName('05')).toBe('Nota_Debito');
+      expect(getSriDocumentTypeName('06')).toBe('Guia_Remision');
+      expect(getSriDocumentTypeName('07')).toBe('Retencion');
+      expect(getSriDocumentTypeName('99')).toBe('Comprobante');
+      expect(getSriDocumentTypeName('')).toBe('Comprobante');
+    });
+  });
+
+  describe('extractDatePartsFromClaveAcceso', () => {
+    it('extracts day, month, and year from first 8 digits', () => {
+      const parts = extractDatePartsFromClaveAcceso(validKey);
+      expect(parts).toEqual({
+        day: '01',
+        month: '01',
+        year: '2024',
+      });
+    });
+
+    it('handles invalid or shorter keys safely without throwing', () => {
+      expect(extractDatePartsFromClaveAcceso('')).toEqual({
+        day: '00',
+        month: '00',
+        year: '0000',
+      });
+    });
+  });
+
+  describe('buildSriDownloadPath', () => {
+    const facturaVoucher: SriVoucher = {
+      claveAcceso: '1508202401179000000000120010020000000451234567812',
+      rucEmisor: '1790000000001',
+      razonSocialEmisor: 'PROVEEDOR S.A.',
+      numeroComprobante: '001-002-000000045',
+      fechaEmision: '15/08/2024',
+      tipoComprobante: '01',
+    };
+
+    it('builds structured hierarchical path by default: Kattxo/RUC/Año/Mes/Tipo/Archivo.xml', () => {
+      const path = buildSriDownloadPath(facturaVoucher, { taxpayerRuc: '1799999999001' });
+      expect(path).toBe(
+        'Kattxo/1799999999001/2024/08/Factura/factura_001-002-000000045_1508202401179000000000120010020000000451234567812.xml'
+      );
+    });
+
+    it('supports PDF format for RIDE', () => {
+      const path = buildSriDownloadPath(facturaVoucher, {
+        taxpayerRuc: '1799999999001',
+        format: 'pdf',
+      });
+      expect(path).toBe(
+        'Kattxo/1799999999001/2024/08/Factura/factura_001-002-000000045_1508202401179000000000120010020000000451234567812.pdf'
+      );
+    });
+
+    it('falls back to emisor RUC if taxpayerRuc is not provided', () => {
+      const path = buildSriDownloadPath(facturaVoucher);
+      expect(path).toContain('Kattxo/1790000000001/2024/08/Factura/');
     });
   });
 

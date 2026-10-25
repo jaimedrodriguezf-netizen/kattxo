@@ -1,29 +1,67 @@
 /**
- * Representa un Comprobante Electrónico de Retención del SRI (Ecuador).
- * Código de tipo de documento del SRI: '07'.
+ * Códigos oficiales de tipos de comprobantes electrónicos del SRI (Ecuador):
+ * 01: Factura
+ * 03: Liquidación de compra de bienes y prestación de servicios
+ * 04: Nota de crédito
+ * 05: Nota de débito
+ * 06: Guía de remisión
+ * 07: Comprobante de retención
  */
-export interface RetentionVoucher {
+export type SriDocumentTypeCode = '01' | '03' | '04' | '05' | '06' | '07' | string;
+
+export type VoucherCategory = 'recibidos' | 'emitidos';
+
+export type VoucherDownloadFormat = 'xml' | 'pdf';
+
+export interface TaxpayerProfile {
+  ruc: string;
+  razonSocial?: string;
+  nombreComercial?: string;
+}
+
+export interface SriDownloadPathOptions {
+  taxpayerRuc?: string;
+  category?: VoucherCategory;
+  format?: VoucherDownloadFormat;
+  baseDirectory?: string;
+}
+
+/**
+ * Representa cualquier Comprobante Electrónico oficial del SRI (Ecuador).
+ */
+export interface SriVoucher {
   /** Clave de acceso única de 49 dígitos numéricos */
   claveAcceso: string;
-  /** RUC del emisor (agente de retención) */
+  /** RUC del emisor */
   rucEmisor: string;
   /** Razón social o nombres del emisor */
   razonSocialEmisor: string;
-  /** Identificación del sujeto retenido (proveedor/retenido) */
+  /** Identificación del receptor/cliente/sujeto retenido */
   identificacionSujetoRetenido?: string;
+  /** Razón social del receptor */
+  razonSocialReceptor?: string;
   /** Número de comprobante formato 000-000-000000000 */
   numeroComprobante: string;
   /** Fecha de emisión (DD/MM/YYYY) */
   fechaEmision: string;
   /** Fecha de autorización por el SRI */
   fechaAutorizacion?: string;
-  /** Ej. '07' para Retención */
-  tipoComprobante: '07' | string;
+  /** Código SRI del comprobante (ej. '01', '04', '07') */
+  tipoComprobante: SriDocumentTypeCode;
   /** Estado de autorización en el SRI (ej. 'AUTORIZADO') */
   estado?: string;
-  /** ID del elemento DOM (ej. 'frmPrincipal:tablaCompRecibidos:0:lnkXml') */
+  /** ID del elemento DOM en la tabla JSF (ej. 'frmPrincipal:tablaCompRecibidos:0:lnkXml') */
   elementId?: string;
+  /** ID del elemento DOM para RIDE PDF si existe */
+  elementPdfId?: string;
+  /** Categoría: recibidos o emitidos */
+  categoria?: VoucherCategory;
 }
+
+/**
+ * Alias de compatibilidad hacia atrás para retenciones.
+ */
+export type RetentionVoucher = SriVoucher;
 
 export type DownloadStatus = 'idle' | 'pending' | 'downloading' | 'completed' | 'failed' | 'paused';
 
