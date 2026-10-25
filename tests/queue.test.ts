@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DownloadQueueManager } from '../src/background/queue';
-import { RetentionVoucher } from '../src/domain/types';
+import { SriVoucher, RetentionVoucher } from '../src/domain/types';
 
 describe('DownloadQueueManager', () => {
   const sampleVouchers: RetentionVoucher[] = [
@@ -100,6 +100,16 @@ describe('DownloadQueueManager', () => {
     state = queue.getState();
     expect(state.stats.completed).toBe(2);
     expect(state.stats.isPaused).toBe(false);
+  });
+
+  it('enqueues vouchers with format option (xml and pdf) and routes hierarchically', () => {
+    queue.enqueue([sampleVouchers[0]], { format: 'xml' });
+    queue.enqueue([sampleVouchers[0]], { format: 'pdf' });
+
+    const state = queue.getState();
+    expect(state.items).toHaveLength(2);
+    expect(state.items[0].format).toBe('xml');
+    expect(state.items[1].format).toBe('pdf');
   });
 
   it('clears queue properly', () => {

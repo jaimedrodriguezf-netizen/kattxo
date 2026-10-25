@@ -3,10 +3,11 @@ import {
   QueueConfig,
   QueueState,
   QueueStats,
-  RetentionVoucher,
+  SriVoucher,
+  VoucherDownloadFormat,
   DEFAULT_QUEUE_CONFIG,
 } from '../domain/types';
-import { buildXmlFilename } from '../domain/validators';
+import { buildSriDownloadPath } from '../domain/validators';
 import { fetchRetentionXml, xmlToDataUrl } from './downloader';
 
 export type ProcessItemFn = (item: DownloadItem, config: QueueConfig) => Promise<void | boolean>;
@@ -35,13 +36,19 @@ export class DownloadQueueManager {
     };
   }
 
-  public enqueue(vouchers: RetentionVoucher[]): void {
+  public enqueue(
+    vouchers: SriVoucher[],
+    options: { format?: VoucherDownloadFormat } = {}
+  ): void {
+    const format: VoucherDownloadFormat = options.format || 'xml';
     for (const voucher of vouchers) {
-      const existing = this.items.get(voucher.claveAcceso);
+      const itemId = `${voucher.claveAcceso}_${format}`;
+      const existing = this.items.get(itemId);
       if (!existing || existing.status === 'failed') {
-        this.items.set(voucher.claveAcceso, {
-          id: voucher.claveAcceso,
+        this.items.set(itemId, {
+          id: itemId,
           voucher,
+          format,
           status: 'pending',
           retryCount: 0,
           maxRetries: this.config.maxRetries,
@@ -164,9 +171,21 @@ export class DownloadQueueManager {
   }
 
   private async defaultProcessItem(item: DownloadItem): Promise<void> {
-    const { xmlContent } = await fetchRetentionXml(item.voucher.claveAcceso);
-    const dataUrl = xmlToDataUrl(xmlContent);
-    const filename = buildXmlFilename(item.voucher, this.config.downloadSubdirectory);
+    const format = item.format || 'xml';
+    const filename = buildSriDownloadPath(item.voucher, {
+      taxpayerRuc: item.voucher.rucEmisor,
+      format,
+      baseDirectory: this.config.downloadSubdirectory || 'Kattxo',
+    });
+
+    let dataUrl = '';
+    if (format === 'xml') {
+      const { xmlContent } = await fetchRetentionXml(item.voucher.claveAcceso);
+      dataUrl = xmlToDataUrl(xmlContent);
+    } else {
+      // PDF RIDE dataUrl placeholder / fetch
+      dataUrl = `data:application/pdf;base64,`;
+    }
 
     if (typeof chrome !== 'undefined' && chrome.downloads?.download) {
       await new Promise<number>((resolve, reject) => {

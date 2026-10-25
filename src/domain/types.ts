@@ -66,8 +66,9 @@ export type RetentionVoucher = SriVoucher;
 export type DownloadStatus = 'idle' | 'pending' | 'downloading' | 'completed' | 'failed' | 'paused';
 
 export interface DownloadItem {
-  id: string; // claveAcceso
-  voucher: RetentionVoucher;
+  id: string; // claveAcceso o claveAcceso_format
+  voucher: SriVoucher;
+  format?: VoucherDownloadFormat;
   status: DownloadStatus;
   retryCount: number;
   maxRetries: number;
