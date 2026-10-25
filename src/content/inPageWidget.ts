@@ -31,6 +31,7 @@ export class InPageWidget {
   private options: InPageWidgetOptions;
   private resumeCallback?: () => void;
   private dismissCallback?: () => void;
+  private newDownloadCallback?: () => void;
 
   constructor(options: InPageWidgetOptions = {}) {
     this.options = options;
@@ -424,7 +425,75 @@ export class InPageWidget {
         .kattxo-action-btn:hover {
           background: #f1f5f9;
         }
+
+        .kattxo-minimized-launcher {
+          position: fixed;
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 2147483646;
+          cursor: pointer;
+          background: #0c4597;
+          color: #ffffff;
+          border: 2px solid #ffffff;
+          border-radius: 12px;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+          display: none;
+          align-items: center;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
+          font-size: 18px;
+          font-weight: 700;
+          user-select: none;
+          transition: transform 0.15s ease;
+        }
+        .kattxo-minimized-launcher:hover {
+          transform: translateY(-50%) scale(1.08);
+        }
+
+        .kattxo-success-card {
+          display: none;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          padding: 16px 12px;
+          background: #ffffff;
+          border: 1px solid #dcfce7;
+          border-radius: 10px;
+          margin-top: 6px;
+        }
+        .kattxo-success-icon-circle {
+          width: 44px;
+          height: 44px;
+          border-radius: 9999px;
+          background: #dcfce7;
+          color: #16a34a;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 8px;
+        }
+        .kattxo-success-icon-circle svg {
+          width: 24px;
+          height: 24px;
+        }
+        .kattxo-success-title {
+          font-size: 15px;
+          font-weight: 700;
+          color: #111827;
+          margin: 0;
+        }
+        .kattxo-success-summary {
+          font-size: 12px;
+          color: #6b7280;
+          margin: 6px 0 0;
+        }
       </style>
+
+      <div class="kattxo-minimized-launcher" style="display: none;" title="Mostrar panel Kattxo SRI">
+        <span>⚡</span>
+      </div>
 
       <div class="kattxo-widget-container">
         <div class="kattxo-widget-header">
@@ -522,6 +591,20 @@ export class InPageWidget {
 
           <div class="kattxo-list-container">
             <ul class="kattxo-download-list"></ul>
+          </div>
+
+          <div class="kattxo-success-card" style="display: none;">
+            <div class="kattxo-success-icon-circle">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            </div>
+            <h3 class="kattxo-success-title">Descarga completada</h3>
+            <p class="kattxo-success-summary">Se descargaron 0 comprobantes con éxito</p>
+            <div class="kattxo-btn-row" style="margin-top: 12px; width: 100%;">
+              <button type="button" class="kattxo-action-btn kattxo-btn-open-folder">📁 Abrir carpeta</button>
+              <button type="button" class="kattxo-action-btn kattxo-btn-new-download" style="background: #0c4597; color: white; border: none;">🔄 Nueva descarga</button>
+            </div>
           </div>
 
           <button type="button" class="kattxo-start-btn">
@@ -633,19 +716,72 @@ export class InPageWidget {
         this.dismissCallback();
       }
     });
+
+    const launcher = this.shadow.querySelector<HTMLElement>('.kattxo-minimized-launcher');
+    launcher?.addEventListener('click', () => {
+      this.toggleMinimize();
+    });
+
+    const openFolderBtn = this.shadow.querySelector('.kattxo-btn-open-folder');
+    openFolderBtn?.addEventListener('click', () => {
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'OPEN_DOWNLOADS_FOLDER' });
+      }
+    });
+
+    const newDownloadBtn = this.shadow.querySelector('.kattxo-btn-new-download');
+    newDownloadBtn?.addEventListener('click', () => {
+      this.hideSuccessScreen();
+      if (this.newDownloadCallback) {
+        this.newDownloadCallback();
+      }
+    });
   }
 
   public toggleMinimize(): void {
     if (!this.shadow) return;
     this.isMinimized = !this.isMinimized;
+    const container = this.shadow.querySelector<HTMLElement>('.kattxo-widget-container');
+    const launcher = this.shadow.querySelector<HTMLElement>('.kattxo-minimized-launcher');
     const bodyEl = this.shadow.querySelector<HTMLElement>('.kattxo-widget-body');
     const toggleBtn = this.shadow.querySelector('.kattxo-toggle-btn');
 
-    if (bodyEl) {
-      bodyEl.style.display = this.isMinimized ? 'none' : 'flex';
+    if (this.isMinimized) {
+      if (container) container.style.display = 'none';
+      if (bodyEl) bodyEl.style.display = 'none';
+      if (launcher) launcher.style.display = 'flex';
+    } else {
+      if (container) container.style.display = 'block';
+      if (launcher) launcher.style.display = 'none';
+      if (bodyEl) bodyEl.style.display = 'flex';
+      if (toggleBtn) toggleBtn.textContent = '_';
     }
-    if (toggleBtn) {
-      toggleBtn.textContent = this.isMinimized ? '▢' : '_';
+  }
+
+  public showSuccessScreen(
+    stats: { total: number; completed: number; failed: number },
+    onNewDownload?: () => void
+  ): void {
+    if (!this.shadow) return;
+    this.newDownloadCallback = onNewDownload;
+
+    const successCard = this.shadow.querySelector<HTMLElement>('.kattxo-success-card');
+    const summaryEl = this.shadow.querySelector('.kattxo-success-summary');
+
+    if (summaryEl) {
+      summaryEl.textContent = `Se descargaron ${stats.completed} de ${stats.total} comprobantes (${stats.failed} fallos).`;
+    }
+
+    if (successCard) {
+      successCard.style.display = 'flex';
+    }
+  }
+
+  public hideSuccessScreen(): void {
+    if (!this.shadow) return;
+    const successCard = this.shadow.querySelector<HTMLElement>('.kattxo-success-card');
+    if (successCard) {
+      successCard.style.display = 'none';
     }
   }
 

@@ -10,8 +10,8 @@ Implementación de la tarjeta de fin de descarga (éxito con botones 'Abrir carp
 - S5: Suite de pruebas unitarias automatizadas con Vitest para los nuevos componentes visuales y el canal de mensajería.
 
 ## Tasks
-- T1 (S1): Mensaje OPEN_DOWNLOADS_FOLDER en messages.ts y manejador en background/index.ts con tests. (inline)
-- T2 (S2, S3): Pantalla de éxito (showSuccessScreen, hideSuccessScreen) y lanzador lateral en inPageWidget.ts con tests. (inline)
+- [x] T1 (S1): Mensaje OPEN_DOWNLOADS_FOLDER en messages.ts y manejador en background/index.ts con tests. (a72d129)
+- [/] T2 (S2, S3): Pantalla de éxito (showSuccessScreen, hideSuccessScreen) y lanzador lateral en inPageWidget.ts con tests. (inline)
 - T3 (S4): Conexión de fin de lote en content/index.ts para activar la pantalla de éxito. (inline)
 - T4 (S5): Verificación integral, tests de la suite completa y build de producción en dist/. (inline)
 

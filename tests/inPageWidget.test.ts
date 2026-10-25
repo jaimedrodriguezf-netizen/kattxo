@@ -59,6 +59,56 @@ describe('InPageWidget (Shadow DOM Floating Panel)', () => {
     expect(bodyEl.style.display).not.toBe('none');
   });
 
+  it('renders floating side launcher when minimized and expands on click', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const launcher = shadow.querySelector<HTMLElement>('.kattxo-minimized-launcher')!;
+    const container = shadow.querySelector<HTMLElement>('.kattxo-widget-container')!;
+
+    expect(launcher).not.toBeNull();
+    expect(launcher.style.display).toBe('none');
+
+    // Minimize widget
+    widget.toggleMinimize();
+    expect(launcher.style.display).not.toBe('none');
+    expect(container.style.display).toBe('none');
+
+    // Click launcher to expand
+    launcher.click();
+    expect(launcher.style.display).toBe('none');
+    expect(container.style.display).not.toBe('none');
+  });
+
+  it('shows success card on completion and handles new download reset', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const successCard = shadow.querySelector<HTMLElement>('.kattxo-success-card')!;
+
+    expect(successCard).not.toBeNull();
+    expect(successCard.style.display).toBe('none');
+
+    let newDownloadClicked = false;
+    widget.showSuccessScreen({ total: 20, completed: 18, failed: 2 }, () => {
+      newDownloadClicked = true;
+    });
+
+    expect(successCard.style.display).not.toBe('none');
+    expect(successCard.textContent).toContain('18');
+    expect(successCard.textContent).toContain('20');
+
+    // Click new download button
+    const newBtn = shadow.querySelector<HTMLButtonElement>('.kattxo-btn-new-download')!;
+    newBtn.click();
+    expect(newDownloadClicked).toBe(true);
+    expect(successCard.style.display).toBe('none');
+  });
+
   it('prunes download list to maximum 100 items for memory efficiency in large batches', () => {
     const widget = new InPageWidget();
     widget.mount(document.body);
