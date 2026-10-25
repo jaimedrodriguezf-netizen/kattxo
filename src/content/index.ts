@@ -9,6 +9,8 @@ import { BatchQueryRunner } from './batchQueryRunner';
 import { vouchersToCsv } from '../domain/csvExporter';
 import { generateDateRangeSteps } from '../domain/dateRangeIterator';
 import { HistoryManager } from '../domain/historyManager';
+import { buildSyntheticSriXml } from '../domain/syntheticXmlGenerator';
+import { buildSriDownloadPath } from '../domain/validators';
 import {
   ExtensionMessage,
   RetentionsDetectedMessage,
@@ -424,11 +426,43 @@ class SriContentScript {
         return true;
       }
 
+      // 4. Si es Comprobante Emitido y el SRI no provee botón de descarga XML, generar XML Sintético
+      if (
+        voucher.categoria === 'emitidos' ||
+        (typeof window !== 'undefined' && window.location.href.includes('/emitidos/'))
+      ) {
+        console.log(`[Kattxo SRI] Generando XML sintético para comprobante emitido: ${voucher.claveAcceso}`);
+        this.downloadSyntheticXml(voucher);
+        return true;
+      }
+
       console.warn(`[Kattxo SRI] No se encontró el botón de descarga XML para el comprobante en índice ${index}`);
       return false;
     } catch (err) {
       console.error(`[Kattxo SRI] Error al ejecutar click de descarga para ${voucher.claveAcceso}:`, err);
       return false;
+    }
+  }
+
+  private downloadSyntheticXml(voucher: SriVoucher): void {
+    try {
+      const xmlString = buildSyntheticSriXml(voucher);
+      const blob = new Blob([xmlString], { type: 'application/xml;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const filename = buildSriDownloadPath(voucher, {
+        category: 'emitidos',
+        format: 'xml',
+        taxpayerRuc: this.currentTaxpayerProfile?.ruc || voucher.rucEmisor,
+      });
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.warn('[Kattxo SRI] Error descargando XML sintético:', err);
     }
   }
 

@@ -10,9 +10,9 @@ Generación de archivos XML conformes al esquema estándar del SRI para Comproba
 - S5: Suite de pruebas unitarias automatizadas con Vitest para validar la estructura XML generada, escapado de caracteres especiales y compatibilidad con lectores contables.
 
 ## Tasks
-- T1 (S1, S2): Módulo syntheticXmlGenerator.ts con generador de infoTributaria, autorizacion y comprobante con tests unitarios. (inline)
-- T2 (S3): Soporte de detalles de productos, totales por impuesto y tarifas de IVA en syntheticXmlGenerator.ts con tests. (inline)
-- T3 (S4): Integración de descarga de XML sintético para comprobantes emitidos en content/index.ts. (inline)
+- [x] T1 (S1, S2): Módulo syntheticXmlGenerator.ts con generador de infoTributaria, autorizacion y comprobante con tests unitarios. (83617ea)
+- [x] T2 (S3): Soporte de detalles de productos, totales por impuesto y tarifas de IVA en syntheticXmlGenerator.ts con tests. (83617ea)
+- [/] T3 (S4): Integración de descarga de XML sintético para comprobantes emitidos en content/index.ts. (inline)
 - T4 (S5): Verificación integral, tests completos de la suite y build de producción en dist/. (inline)
 
 ## Log
