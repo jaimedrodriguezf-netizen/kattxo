@@ -1,5 +1,5 @@
 import { SriVoucher, RetentionVoucher, TaxpayerProfile, VoucherCategory } from '../domain/types';
-import { isValidClaveAcceso, isValidRuc } from '../domain/validators';
+import { isValidClaveAcceso, isValidRuc, parseCurrencyAmount } from '../domain/validators';
 
 /**
  * Descompone una clave de acceso de 49 dígitos del SRI en sus metadatos intrínsecos.
@@ -196,10 +196,20 @@ export function extractVouchersFromDom(
         if (cells.length > 0) {
           for (const cell of cells) {
             const cellText = ((cell as HTMLElement).innerText || cell.textContent || '').trim();
+
+            // Detectar importe total de la fila (formato monetario e.g. $ 125.50 o 125.50)
+            if (/^\$?\s*\d{1,7}(?:[.,]\d{3})*[.,]\d{2}$/.test(cellText)) {
+              const parsedAmt = parseCurrencyAmount(cellText);
+              if (parsedAmt > 0) {
+                parsed.totalImporte = parsedAmt;
+              }
+            }
+
             if (
               cellText.length > 4 &&
               !/^\d+$/.test(cellText) &&
               !/^\d{2}\/\d{2}\/\d{4}$/.test(cellText) &&
+              !/^\$?\s*\d/.test(cellText) &&
               !cellText.includes(key) &&
               !cellText.toLowerCase().includes('factura') &&
               !cellText.toLowerCase().includes('retención') &&
@@ -211,7 +221,6 @@ export function extractVouchersFromDom(
               } else {
                 parsed.razonSocialEmisor = cellText;
               }
-              break;
             }
           }
         }

@@ -226,6 +226,26 @@ describe('SRI Parser & Clave de Acceso Decomposition', () => {
       expect(vouchers[0].categoria).toBe('emitidos');
       expect(vouchers[0].razonSocialReceptor).toBe('CLIENTE FINAL CIA. LTDA.');
     });
+
+    it('extracts total amount from row cell when formatted as currency', () => {
+      document.body.innerHTML = `
+        <table>
+          <tbody>
+            <tr>
+              <td>PROVEEDOR S.A.</td>
+              <td>Factura</td>
+              <td>001-001-000000001</td>
+              <td>$ 250.75</td>
+              <td>${sampleKeyFactura}</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+
+      const vouchers = extractVouchersFromDom(document);
+      expect(vouchers).toHaveLength(1);
+      expect(vouchers[0].totalImporte).toBe(250.75);
+    });
   });
 
   describe('extractTaxpayerProfileFromDom', () => {

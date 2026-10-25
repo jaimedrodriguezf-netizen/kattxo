@@ -56,6 +56,8 @@ export interface SriVoucher {
   elementPdfId?: string;
   /** Categoría: recibidos o emitidos */
   categoria?: VoucherCategory;
+  /** Importe total monetario reflejado en la tabla o comprobante */
+  totalImporte?: number;
 }
 
 /**
