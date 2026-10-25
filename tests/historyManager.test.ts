@@ -3,6 +3,7 @@ import {
   HistoryManager,
   DownloadSessionRecord,
   UserPreferences,
+  AutoResumeState,
   DEFAULT_USER_PREFERENCES,
 } from '../src/domain/historyManager';
 import { SriVoucher } from '../src/domain/types';
@@ -146,6 +147,50 @@ describe('HistoryManager & User Preferences', () => {
       expect(updated.downloadSubdirectory).toBe('Facturas_SRI_2024');
       expect(updated.throttlingDelayMs).toBe(2000);
       expect(updated.downloadPdfRide).toBe(true);
+    });
+  });
+
+  describe('Auto-Resume State Management', () => {
+    it('saves and retrieves auto-resume state', async () => {
+      const manager = new HistoryManager(mockStorage);
+      const state: AutoResumeState = {
+        id: 'auto-123',
+        timestamp: Date.now(),
+        taxpayerRuc: '1790011223001',
+        pendingVouchers: [sampleVoucher],
+        totalOriginal: 10,
+        completedSoFar: 4,
+      };
+
+      await manager.saveAutoResumeState(state);
+      const retrieved = await manager.getAutoResumeState();
+
+      expect(retrieved).not.toBeNull();
+      expect(retrieved?.id).toBe('auto-123');
+      expect(retrieved?.pendingVouchers).toHaveLength(1);
+      expect(retrieved?.completedSoFar).toBe(4);
+    });
+
+    it('clears auto-resume state', async () => {
+      const manager = new HistoryManager(mockStorage);
+      await manager.saveAutoResumeState({
+        id: 'auto-123',
+        timestamp: Date.now(),
+        taxpayerRuc: '1790011223001',
+        pendingVouchers: [sampleVoucher],
+        totalOriginal: 10,
+        completedSoFar: 4,
+      });
+
+      await manager.clearAutoResumeState();
+      const retrieved = await manager.getAutoResumeState();
+      expect(retrieved).toBeNull();
+    });
+
+    it('returns null if no auto-resume state is stored', async () => {
+      const manager = new HistoryManager(mockStorage);
+      const retrieved = await manager.getAutoResumeState();
+      expect(retrieved).toBeNull();
     });
   });
 });

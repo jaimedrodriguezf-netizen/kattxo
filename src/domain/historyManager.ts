@@ -22,6 +22,15 @@ export interface UserPreferences {
   downloadPdfRide: boolean;
 }
 
+export interface AutoResumeState {
+  id: string;
+  timestamp: number;
+  taxpayerRuc: string;
+  pendingVouchers: SriVoucher[];
+  totalOriginal: number;
+  completedSoFar: number;
+}
+
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   downloadSubdirectory: 'Kattxo',
   throttlingDelayMs: 1200,
@@ -36,6 +45,7 @@ export interface StorageAreaLike {
 
 const STORAGE_KEY_HISTORY = 'kattxo_download_history';
 const STORAGE_KEY_PREFS = 'kattxo_user_preferences';
+const STORAGE_KEY_AUTO_RESUME = 'kattxo_auto_resume';
 
 export class HistoryManager {
   private storage: StorageAreaLike;
@@ -110,5 +120,18 @@ export class HistoryManager {
     const updated = { ...current, ...prefs };
     await this.storage.set({ [STORAGE_KEY_PREFS]: updated });
     return updated;
+  }
+
+  public async saveAutoResumeState(state: AutoResumeState): Promise<void> {
+    await this.storage.set({ [STORAGE_KEY_AUTO_RESUME]: state });
+  }
+
+  public async getAutoResumeState(): Promise<AutoResumeState | null> {
+    const data = await this.storage.get(STORAGE_KEY_AUTO_RESUME);
+    return (data[STORAGE_KEY_AUTO_RESUME] as AutoResumeState) || null;
+  }
+
+  public async clearAutoResumeState(): Promise<void> {
+    await this.storage.remove(STORAGE_KEY_AUTO_RESUME);
   }
 }
