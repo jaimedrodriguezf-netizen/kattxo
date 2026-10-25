@@ -94,6 +94,21 @@ export class InPageWidget {
           gap: 6px;
         }
 
+        .kattxo-header-btn {
+          background: transparent;
+          border: none;
+          color: #94a3b8;
+          cursor: pointer;
+          font-size: 14px;
+          padding: 2px 6px;
+          border-radius: 4px;
+          transition: color 0.15s;
+        }
+        .kattxo-header-btn:hover {
+          color: #ffffff;
+          background: #1e293b;
+        }
+
         .kattxo-toggle-btn {
           background: transparent;
           border: none;
@@ -222,7 +237,10 @@ export class InPageWidget {
       <div class="kattxo-widget-container">
         <div class="kattxo-widget-header">
           <span class="kattxo-header-title">⚡ Kattxo SRI Manager</span>
-          <button type="button" class="kattxo-toggle-btn" title="Minimizar / Expandir">_</button>
+          <div style="display: flex; gap: 4px; align-items: center;">
+            <button type="button" class="kattxo-options-btn kattxo-header-btn" title="Historial y Configuración">⚙️</button>
+            <button type="button" class="kattxo-toggle-btn kattxo-header-btn" title="Minimizar / Expandir">_</button>
+          </div>
         </div>
 
         <div class="kattxo-widget-body">
@@ -291,7 +309,14 @@ export class InPageWidget {
     if (!this.shadow) return;
 
     const toggleBtn = this.shadow.querySelector('.kattxo-toggle-btn');
+    const optionsBtn = this.shadow.querySelector('.kattxo-options-btn');
     const bodyEl = this.shadow.querySelector<HTMLElement>('.kattxo-widget-body');
+
+    optionsBtn?.addEventListener('click', () => {
+      if (typeof chrome !== 'undefined' && chrome.runtime?.openOptionsPage) {
+        chrome.runtime.openOptionsPage();
+      }
+    });
 
     toggleBtn?.addEventListener('click', () => {
       this.isMinimized = !this.isMinimized;

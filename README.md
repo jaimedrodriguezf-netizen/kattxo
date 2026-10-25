@@ -36,6 +36,7 @@ Forma parte del ecosistema del sistema contable **Kattxo**.
 - **Validación de Integridad XML:** Antes de almacenar un archivo, el background worker valida que la respuesta sea un XML tributario auténtico del SRI, evitando que páginas HTML de error de sesión se guarden como archivos corruptos.
 - **Exportador Tabular CSV/Excel:** Generación instantánea de archivo CSV con codificación UTF-8 BOM y delimitador `;` (estándar para Excel en español) con todos los metadatos de los comprobantes detectados (Emisor, Receptor, Fechas, Números, Tipo y Claves de acceso).
 - **Descarga de Reporte TXT Oficial del SRI:** Disparador automático del enlace nativo del portal del SRI (`frmPrincipal:lnkTxtlistado`) para descargar el reporte TXT oficial del período con un solo clic.
+- **Panel de Opciones e Historial (`options.html`):** Registro persistente de sesiones de descargas en `chrome.storage.local`, visualización tabular de lotes y **botón de reanudación automática** para procesar comprobantes pendientes o fallidos si la sesión del SRI se corta. Incluye configuración de directorio base y tiempos de espera de cortesía.
 - **Panel de Control Dual (Popup + In-Page):** Disponible tanto desde el icono de extensiones de Chrome como mediante el widget flotante inyectado en el portal.
 
 ---

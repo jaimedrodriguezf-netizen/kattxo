@@ -8,6 +8,7 @@ import { triggerSriTxtReportDownload } from './formAutomator';
 import { BatchQueryRunner } from './batchQueryRunner';
 import { vouchersToCsv } from '../domain/csvExporter';
 import { generateDateRangeSteps } from '../domain/dateRangeIterator';
+import { HistoryManager } from '../domain/historyManager';
 import {
   ExtensionMessage,
   RetentionsDetectedMessage,
@@ -212,6 +213,27 @@ class SriContentScript {
     const isFinished = this.currentDownloadIndex >= this.downloadVouchersList.length;
     this.broadcastProgress(this.downloadVouchersList.length, completed, failed, undefined, isFinished);
     console.log(`[Kattxo SRI] Descarga finalizada: ${completed} completados, ${failed} fallidos.`);
+
+    // Registrar en el historial de sesiones para auditoría y reanudación
+    try {
+      const historyManager = new HistoryManager();
+      const pendingVouchers = this.downloadVouchersList.slice(this.currentDownloadIndex);
+      const status = isFinished && failed === 0 ? 'completed' : isFinished ? 'partial' : 'interrupted';
+      await historyManager.saveSessionRecord({
+        id: `session-${Date.now()}`,
+        timestamp: Date.now(),
+        taxpayerRuc: this.currentTaxpayerProfile?.ruc || 'SRI',
+        taxpayerName: this.currentTaxpayerProfile?.razonSocial,
+        documentType: 'ALL',
+        totalVouchers: this.downloadVouchersList.length,
+        completedVouchers: completed,
+        failedVouchers: failed,
+        status,
+        pendingVouchers,
+      });
+    } catch (err) {
+      console.warn('[Kattxo SRI] Error guardando registro en historial:', err);
+    }
   }
 
   private triggerDownloadForVoucher(voucher: SriVoucher, index: number): boolean {

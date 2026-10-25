@@ -45,6 +45,7 @@ export class PopupController {
     document.getElementById('btn-clear')?.addEventListener('click', () => this.clearQueue());
     document.getElementById('btn-export-csv')?.addEventListener('click', () => this.exportCsv());
     document.getElementById('btn-txt-report')?.addEventListener('click', () => this.requestSriTxtDownload());
+    document.getElementById('btn-open-options')?.addEventListener('click', () => this.openOptionsPage());
 
     // Escuchar mensajes broadcast del Background y del Content Script
     if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
@@ -129,6 +130,12 @@ export class PopupController {
         this.render();
       }
     });
+  }
+
+  public openOptionsPage(): void {
+    if (typeof chrome !== 'undefined' && chrome.runtime?.openOptionsPage) {
+      chrome.runtime.openOptionsPage();
+    }
   }
 
   public exportCsv(): void {

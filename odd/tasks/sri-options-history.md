@@ -13,8 +13,8 @@ Página de opciones del sistema Kattxo SRI (options.html) con registro históric
 ## Tasks
 - [x] T1 (S2): Modelo de datos de historial y módulo historyManager.ts con pruebas unitarias. (4706b88)
 - [x] T2 (S3, S4): Lógica de reanudación y configuración de preferencias de usuario con tests. (4706b88)
-- [/] T3 (S1, S5): Creación de options.html, estilos y controlador src/options/index.ts. (inline)
-- T4 (S6): Integración en vite.config.ts, verificación integral de tests y build de producción en dist/. (inline)
+- [x] T3 (S1, S5): Creación de options.html, estilos y controlador src/options/index.ts. (621b651)
+- [x] T4 (S6): Integración en vite.config.ts, verificación integral de tests y build de producción en dist/. (621b651, 88c2f10)
 
 ## Log
 - L1: Usuario selecciona: "si dale" para implementar el Paso B (Historial de descargas local en options.html con reanudación automática).
