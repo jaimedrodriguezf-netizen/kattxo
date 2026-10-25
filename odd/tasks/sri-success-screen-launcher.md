@@ -12,8 +12,8 @@ Implementación de la tarjeta de fin de descarga (éxito con botones 'Abrir carp
 ## Tasks
 - [x] T1 (S1): Mensaje OPEN_DOWNLOADS_FOLDER en messages.ts y manejador en background/index.ts con tests. (a72d129)
 - [x] T2 (S2, S3): Pantalla de éxito (showSuccessScreen, hideSuccessScreen) y lanzador lateral en inPageWidget.ts con tests. (705ebb6)
-- [/] T3 (S4): Conexión de fin de lote en content/index.ts para activar la pantalla de éxito. (inline)
-- T4 (S5): Verificación integral, tests de la suite completa y build de producción en dist/. (inline)
+- [x] T3 (S4): Conexión de fin de lote en content/index.ts para activar la pantalla de éxito. (1450256)
+- [x] T4 (S5): Verificación integral, tests de la suite completa y build de producción en dist/. (a72d129, 705ebb6, 1450256)
 
 ## Log
 - L1: Usuario confirma: "ok dale" tras los hallazgos de REA sobre success-screen y minimized-launcher.
