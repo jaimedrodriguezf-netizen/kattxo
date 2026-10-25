@@ -12,12 +12,12 @@ export interface InPageProgressData {
 }
 
 export interface InPageWidgetOptions {
-  onStartDownload?: (documentType: string) => void;
+  onStartDownload?: (documentType: string, format?: 'XML' | 'PDF' | 'TXT') => void;
   onPauseDownload?: () => void;
   onResumeDownload?: () => void;
   onExportCsv?: () => void;
   onDownloadTxtReport?: () => void;
-  onStartBatchRange?: (params: { from: string; to: string; documentType: string }) => void;
+  onStartBatchRange?: (params: { from: string; to: string; documentType: string; format?: 'XML' | 'PDF' | 'TXT' }) => void;
 }
 
 /**
@@ -570,8 +570,9 @@ export class InPageWidget {
 
     startBtn?.addEventListener('click', () => {
       const docType = select ? select.value : 'ALL';
+      const format = this.getSelectedFormat();
       if (this.options.onStartDownload) {
-        this.options.onStartDownload(docType);
+        this.options.onStartDownload(docType, format);
       }
     });
 
@@ -583,8 +584,9 @@ export class InPageWidget {
       const from = fromInput?.value || '';
       const to = toInput?.value || '';
       const docType = select ? select.value : 'ALL';
+      const format = this.getSelectedFormat();
       if (this.options.onStartBatchRange) {
-        this.options.onStartBatchRange({ from, to, documentType: docType });
+        this.options.onStartBatchRange({ from, to, documentType: docType, format });
       }
     });
 
@@ -748,6 +750,15 @@ export class InPageWidget {
     const statusLabel = this.shadow.querySelector('.kattxo-status-label');
     const progressText = this.shadow.querySelector('.kattxo-progress-text');
     const progressFill = this.shadow.querySelector<HTMLElement>('.kattxo-progress-fill');
+    const statDownloaded = this.shadow.querySelector('.kattxo-stat-downloaded');
+    const statTotal = this.shadow.querySelector('.kattxo-stat-total');
+
+    if (statDownloaded) {
+      statDownloaded.textContent = `${data.completed}`;
+    }
+    if (statTotal) {
+      statTotal.textContent = `/ ${data.total} archivos`;
+    }
 
     if (progressText) {
       progressText.textContent = `${data.completed} / ${data.total}`;

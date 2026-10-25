@@ -220,6 +220,7 @@ describe('InPageWidget (Shadow DOM Floating Panel)', () => {
       from: '2024-03-01',
       to: '2024-03-15',
       documentType: '01',
+      format: 'XML',
     });
   });
 

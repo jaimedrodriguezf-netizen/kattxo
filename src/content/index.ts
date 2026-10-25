@@ -68,15 +68,25 @@ class SriContentScript {
   private initWidget(): void {
     if (typeof document === 'undefined') return;
     this.widget = new InPageWidget({
-      onStartDownload: (docType) => {
+      onStartDownload: (docType, format) => {
+        if (format === 'TXT') {
+          this.downloadSriTxtReport();
+          return;
+        }
         const vouchers = this.scan(docType);
-        this.startBulkDownload(vouchers);
+        this.startBulkDownload(vouchers, format === 'PDF' ? 'PDF' : 'XML');
       },
       onPauseDownload: () => this.pauseBulkDownload(),
       onResumeDownload: () => this.resumeBulkDownload(),
       onExportCsv: () => this.exportDetectedToCsv(),
       onDownloadTxtReport: () => this.downloadSriTxtReport(),
-      onStartBatchRange: (params) => this.startBatchRangeDownload(params),
+      onStartBatchRange: (params) => {
+        if (params.format === 'TXT') {
+          this.downloadSriTxtReport();
+          return;
+        }
+        this.startBatchRangeDownload(params);
+      },
     });
 
     if (document.body) {
@@ -195,7 +205,10 @@ class SriContentScript {
     console.log(`[Kattxo SRI] Consulta continua finalizada con estado: ${result.status}`);
   }
 
-  public async startBulkDownload(vouchers?: SriVoucher[]): Promise<void> {
+  public async startBulkDownload(
+    vouchers?: SriVoucher[],
+    format: 'XML' | 'PDF' = 'XML'
+  ): Promise<void> {
     if (this.isDownloading) return;
 
     this.downloadVouchersList = vouchers && vouchers.length > 0 ? vouchers : this.scan();
@@ -204,6 +217,7 @@ class SriContentScript {
       return;
     }
 
+    this.widget?.clearDownloadList();
     this.isDownloading = true;
     this.isPaused = false;
     this.currentDownloadIndex = 0;
@@ -218,13 +232,16 @@ class SriContentScript {
       const voucher = this.downloadVouchersList[this.currentDownloadIndex];
       this.broadcastProgress(this.downloadVouchersList.length, completed, failed, voucher.claveAcceso, false);
 
-      const success = this.triggerDownloadForVoucher(voucher, this.currentDownloadIndex);
+      this.widget?.addDownloadItem(voucher, 'downloading');
+      const success = this.triggerDownloadForVoucher(voucher, this.currentDownloadIndex, format);
       if (success) {
         completed++;
         consecutiveFailures = 0;
+        this.widget?.updateItemStatus(voucher.claveAcceso, 'completed');
       } else {
         failed++;
         consecutiveFailures++;
+        this.widget?.updateItemStatus(voucher.claveAcceso, 'failed');
         if (consecutiveFailures >= 3) {
           console.warn(
             '[Kattxo SRI] ⚠️ Circuit breaker activado: 3 fallos consecutivos detectados (posible caída de sesión del SRI).'
@@ -337,8 +354,35 @@ class SriContentScript {
     }
   }
 
-  private triggerDownloadForVoucher(voucher: SriVoucher, index: number): boolean {
+  private triggerDownloadForVoucher(
+    voucher: SriVoucher,
+    index: number,
+    format: 'XML' | 'PDF' = 'XML'
+  ): boolean {
     try {
+      if (format === 'PDF') {
+        if (voucher.elementPdfId) {
+          const el = document.getElementById(voucher.elementPdfId);
+          if (el) {
+            el.click();
+            return true;
+          }
+        }
+        const indexedPdfId = `frmPrincipal:tablaCompRecibidos:${index}:lnkPdf`;
+        const indexedPdfEl = document.getElementById(indexedPdfId);
+        if (indexedPdfEl) {
+          indexedPdfEl.click();
+          return true;
+        }
+        const allPdfLinks = document.querySelectorAll<HTMLElement>(
+          'a[id*="lnkPdf"], a[id*="lnkRide"], a[title*="ride" i], a[title*="pdf" i]'
+        );
+        if (allPdfLinks[index]) {
+          allPdfLinks[index].click();
+          return true;
+        }
+      }
+
       // 1. Intentar por elementId guardado
       if (voucher.elementId) {
         const el = document.getElementById(voucher.elementId);
