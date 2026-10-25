@@ -69,19 +69,19 @@ export class InPageWidget {
         }
 
         .kattxo-widget-container {
-          width: 320px;
-          background: #ffffff;
+          width: 360px;
+          background: #f8f9ff;
           border-radius: 12px;
           box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-          border: 1px solid #e2e8f0;
+          border: 1px solid #747687;
           overflow: hidden;
           transition: all 0.2s ease;
         }
 
         .kattxo-widget-header {
-          background: #0f172a;
+          background: #0c4597;
           color: #f8fafc;
-          padding: 10px 14px;
+          padding: 12px 14px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -90,7 +90,7 @@ export class InPageWidget {
 
         .kattxo-header-title {
           font-weight: 700;
-          font-size: 13px;
+          font-size: 14px;
           display: flex;
           align-items: center;
           gap: 6px;
@@ -191,10 +191,76 @@ export class InPageWidget {
           padding: 2px 4px;
         }
 
-        .kattxo-form-group {
+        .kattxo-format-group {
+          display: flex;
+          justify-content: space-between;
+          gap: 6px;
+          padding: 6px 4px;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+        }
+        .kattxo-radio-item {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 11.5px;
+          font-weight: 500;
+          color: #374151;
+          cursor: pointer;
+        }
+        .kattxo-radio {
+          cursor: pointer;
+          accent-color: #0c4597;
+        }
+
+        .kattxo-status-card {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          padding: 10px 12px;
+        }
+        .kattxo-status-icon {
+          width: 38px;
+          height: 38px;
+          border-radius: 8px;
+          background: #0c4597;
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .kattxo-status-icon svg {
+          width: 22px;
+          height: 22px;
+        }
+        .kattxo-status-info {
           display: flex;
           flex-direction: column;
+        }
+        .kattxo-status-label-small {
+          font-size: 11px;
+          color: #6b7280;
+          font-weight: 500;
+        }
+        .kattxo-status-counts {
+          display: flex;
+          align-items: baseline;
           gap: 4px;
+        }
+        .kattxo-stat-downloaded {
+          font-size: 18px;
+          font-weight: 700;
+          color: #111827;
+          line-height: 1.2;
+        }
+        .kattxo-stat-total {
+          font-size: 11.5px;
+          color: #6b7280;
         }
         .kattxo-label {
           font-size: 11px;
@@ -282,7 +348,7 @@ export class InPageWidget {
 
       <div class="kattxo-widget-container">
         <div class="kattxo-widget-header">
-          <span class="kattxo-header-title">⚡ Kattxo SRI Manager</span>
+          <span class="kattxo-header-title">⚡ Kattxo | XML Manager</span>
           <div style="display: flex; gap: 4px; align-items: center;">
             <button type="button" class="kattxo-options-btn kattxo-header-btn" title="Historial y Configuración">⚙️</button>
             <button type="button" class="kattxo-toggle-btn kattxo-header-btn" title="Minimizar / Expandir">_</button>
@@ -327,6 +393,36 @@ export class InPageWidget {
             <div class="kattxo-form-group" style="flex: 1;">
               <label class="kattxo-label">Hasta</label>
               <input type="date" class="kattxo-select kattxo-date-to" value="${defaultRange.to}" />
+            </div>
+          </div>
+
+          <div class="kattxo-format-group" role="radiogroup" aria-label="Formato de descarga">
+            <label class="kattxo-radio-item">
+              <input type="radio" class="kattxo-radio" name="kattxo-format" value="XML" checked>
+              <span>Extractos XML</span>
+            </label>
+            <label class="kattxo-radio-item">
+              <input type="radio" class="kattxo-radio" name="kattxo-format" value="PDF">
+              <span>Archivos PDF</span>
+            </label>
+            <label class="kattxo-radio-item">
+              <input type="radio" class="kattxo-radio" name="kattxo-format" value="TXT">
+              <span>Reportes TXT</span>
+            </label>
+          </div>
+
+          <div class="kattxo-status-card">
+            <div class="kattxo-status-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+            </div>
+            <div class="kattxo-status-info">
+              <p class="kattxo-status-label-small">Comprobantes procesados</p>
+              <div class="kattxo-status-counts">
+                <span class="kattxo-stat-downloaded">0</span>
+                <span class="kattxo-stat-total">/ 0 archivos</span>
+              </div>
             </div>
           </div>
 
@@ -468,6 +564,15 @@ export class InPageWidget {
 
     if (countEl) countEl.textContent = pendingCount.toString();
     if (banner) banner.style.display = 'flex';
+  }
+
+  public getSelectedFormat(): 'XML' | 'PDF' | 'TXT' {
+    if (!this.shadow) return 'XML';
+    const radios = Array.from(this.shadow.querySelectorAll<HTMLInputElement>('input[name="kattxo-format"]'));
+    const checked = radios.find((r) => r.checked);
+    const val = checked?.value;
+    if (val === 'PDF' || val === 'TXT') return val;
+    return 'XML';
   }
 
   public setTaxpayerProfile(profile: TaxpayerProfile): void {

@@ -56,6 +56,36 @@ describe('InPageWidget (Shadow DOM Floating Panel)', () => {
     expect(taxpayerEl?.textContent).toContain('EMPRESA KATTXO');
   });
 
+  it('renders radio group for format selection (XML, PDF, TXT) and retrieves selected format', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const radios = shadow.querySelectorAll<HTMLInputElement>('input[name="kattxo-format"]');
+
+    expect(radios.length).toBe(3);
+    expect(widget.getSelectedFormat()).toBe('XML');
+
+    // Select PDF
+    const pdfRadio = Array.from(radios).find((r) => r.value === 'PDF')!;
+    pdfRadio.checked = true;
+    pdfRadio.dispatchEvent(new Event('change'));
+
+    expect(widget.getSelectedFormat()).toBe('PDF');
+  });
+
+  it('renders status card with download metric counters', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const statusCard = shadow.querySelector('.kattxo-status-card');
+
+    expect(statusCard).not.toBeNull();
+  });
+
   it('updates progress metrics and bar width', () => {
     const widget = new InPageWidget();
     widget.mount(document.body);
