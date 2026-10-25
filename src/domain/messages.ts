@@ -13,7 +13,8 @@ export type ExtensionMessageType =
   | 'PAUSE_IN_PAGE_DOWNLOAD'
   | 'RESUME_IN_PAGE_DOWNLOAD'
   | 'DOWNLOAD_PROGRESS_UPDATE'
-  | 'DOWNLOAD_SRI_TXT_REQUEST';
+  | 'DOWNLOAD_SRI_TXT_REQUEST'
+  | 'BATCH_COMPLETED_NOTIFICATION';
 
 export interface BaseMessage {
   type: ExtensionMessageType;
@@ -91,6 +92,15 @@ export interface DownloadSriTxtRequestMessage extends BaseMessage {
   type: 'DOWNLOAD_SRI_TXT_REQUEST';
 }
 
+export interface BatchCompletedNotificationMessage extends BaseMessage {
+  type: 'BATCH_COMPLETED_NOTIFICATION';
+  payload: {
+    total: number;
+    completed: number;
+    failed: number;
+  };
+}
+
 export type ExtensionMessage =
   | RetentionsDetectedMessage
   | StartDownloadQueueMessage
@@ -104,7 +114,8 @@ export type ExtensionMessage =
   | PauseInPageDownloadMessage
   | ResumeInPageDownloadMessage
   | DownloadProgressUpdateMessage
-  | DownloadSriTxtRequestMessage;
+  | DownloadSriTxtRequestMessage
+  | BatchCompletedNotificationMessage;
 
 export interface MessageResponse<T = unknown> {
   success: boolean;

@@ -231,6 +231,18 @@ class SriContentScript {
         status,
         pendingVouchers,
       });
+
+      // Notificar al background para emitir notificación de escritorio
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({
+          type: 'BATCH_COMPLETED_NOTIFICATION',
+          payload: {
+            total: this.downloadVouchersList.length,
+            completed,
+            failed,
+          },
+        });
+      }
     } catch (err) {
       console.warn('[Kattxo SRI] Error guardando registro en historial:', err);
     }

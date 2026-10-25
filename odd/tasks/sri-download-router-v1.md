@@ -11,8 +11,8 @@ Implementación del enrutador dinámico de descargas en segundo plano con onDete
 
 ## Tasks
 - [x] T1 (S1, S2): Módulo downloadRouter.ts con interceptor de nombres, auto-danger approval y tests unitarios. (429b159)
-- [/] T2 (S3): Sistema de notificaciones de escritorio en notifications.ts y tests. (inline)
-- T3 (S1, S3): Integración en background/index.ts y content/index.ts con permisos en manifest.json. (inline)
+- [x] T2 (S3): Sistema de notificaciones de escritorio en notifications.ts y tests. (0d2bc29)
+- [/] T3 (S1, S3): Integración en background/index.ts y content/index.ts con permisos en manifest.json. (inline)
 - T4 (S4, S5): Bump a v1.0.0, verificación integral de 111+ tests y build de producción en dist/. (inline)
 
 ## Log

@@ -1,8 +1,13 @@
 import { DownloadQueueManager } from './queue';
+import { setupDownloadRouter } from './downloadRouter';
+import { notifyBatchCompleted } from './notifications';
 import { ExtensionMessage, MessageResponse, QueueStateChangedMessage } from '../domain/messages';
 import { RetentionVoucher } from '../domain/types';
 
 console.log('[Kattxo SRI] Background service worker iniciado.');
+
+// Inicializar interceptor de nombres de archivo y auto-aprobación de descargas
+setupDownloadRouter();
 
 const queueManager = new DownloadQueueManager();
 let lastDetectedRetenciones: RetentionVoucher[] = [];
@@ -94,6 +99,14 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
               detectedCount: lastDetectedRetenciones.length,
             },
           });
+          break;
+        }
+
+        case 'BATCH_COMPLETED_NOTIFICATION': {
+          notifyBatchCompleted(message.payload).catch((err) => {
+            console.warn('[Kattxo SRI] Error mostrando notificación de fin de lote:', err);
+          });
+          sendResponse({ success: true });
           break;
         }
 
