@@ -19,6 +19,7 @@ Forma parte del ecosistema del sistema contable **Kattxo**.
   - Comprobantes de Retención (`07`)
   - Soporte tanto para **Comprobantes Recibidos** como **Comprobantes Emitidos**.
 - **Automatización de Formularios JSF:** Selección programática de dropdowns (Año, Mes, Día y Tipo de Comprobante) y disparo de búsqueda AJAX sin recarga total.
+- **Consulta Continua por Rango de Fechas (Desde / Hasta):** Selector interactivo de rango de fechas en el panel flotante que automatiza la búsqueda secuencial día por día o meses completos, sorteando el error de "excedió el número máximo de registros" del SRI mediante ejecución desatendida.
 - **Paginación Automática:** Recorre automáticamente todas las páginas de resultados de RichFaces / PrimeFaces (`.ui-paginator` / `.rich-datascr`).
 - **Organización Jerárquica en Disco:**
   Estructura automática en la carpeta de descargas:
