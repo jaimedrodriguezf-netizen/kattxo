@@ -12,8 +12,8 @@ Generación de archivos XML conformes al esquema estándar del SRI para Comproba
 ## Tasks
 - [x] T1 (S1, S2): Módulo syntheticXmlGenerator.ts con generador de infoTributaria, autorizacion y comprobante con tests unitarios. (83617ea)
 - [x] T2 (S3): Soporte de detalles de productos, totales por impuesto y tarifas de IVA en syntheticXmlGenerator.ts con tests. (83617ea)
-- [/] T3 (S4): Integración de descarga de XML sintético para comprobantes emitidos en content/index.ts. (inline)
-- T4 (S5): Verificación integral, tests completos de la suite y build de producción en dist/. (inline)
+- [x] T3 (S4): Integración de descarga de XML sintético para comprobantes emitidos en content/index.ts. (3461ff9)
+- [x] T4 (S5): Verificación integral, tests completos de la suite y build de producción en dist/. (83617ea, 3461ff9)
 
 ## Log
 - L1: Usuario confirma: "ok hazlo" para implementar el generador de XML sintético para comprobantes emitidos.
