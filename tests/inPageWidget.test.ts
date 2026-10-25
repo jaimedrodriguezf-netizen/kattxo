@@ -86,6 +86,42 @@ describe('InPageWidget (Shadow DOM Floating Panel)', () => {
     expect(statusCard).not.toBeNull();
   });
 
+  it('renders and updates live download items with spinner and badges', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const list = shadow.querySelector('.kattxo-download-list')!;
+    expect(list).not.toBeNull();
+
+    widget.addDownloadItem(
+      {
+        claveAcceso: '0101202401179000000000120010010000000011234567811',
+        rucEmisor: '1790000000001',
+        razonSocialEmisor: 'EMPRESA 1',
+        numeroComprobante: '001-001-000000001',
+        fechaEmision: '01/01/2024',
+        tipoComprobante: '01',
+      },
+      'downloading'
+    );
+
+    const item = shadow.querySelector('li[data-id="0101202401179000000000120010010000000011234567811"]')!;
+    expect(item).not.toBeNull();
+    expect(item.textContent).toContain('001-001-000000001');
+    expect(item.querySelector('.kattxo-spinner')).not.toBeNull();
+
+    // Update status to completed
+    widget.updateItemStatus('0101202401179000000000120010010000000011234567811', 'completed');
+    expect(item.querySelector('.kattxo-spinner')).toBeNull();
+    expect(item.querySelector('.kattxo-badge-done')?.textContent).toContain('Descargado');
+
+    // Clear list
+    widget.clearDownloadList();
+    expect(shadow.querySelectorAll('.kattxo-download-list li').length).toBe(0);
+  });
+
   it('updates progress metrics and bar width', () => {
     const widget = new InPageWidget();
     widget.mount(document.body);

@@ -10,8 +10,8 @@ Alineación estética y funcional del widget flotante in-page (Shadow DOM) para 
 - S5: Suite de pruebas unitarias automatizadas con Vitest para los nuevos componentes y eventos del widget.
 
 ## Tasks
-- T1 (S1, S2): Rediseño de plantilla HTML y estilos CSS en inPageWidget.ts (layout 384px, radio buttons de formato, tarjeta de estado) con tests. (inline)
-- T2 (S3): Implementación de lista en vivo de comprobantes (addDownloadItem, updateItemStatus) con spinner y badges en inPageWidget.ts y tests. (inline)
+- [x] T1 (S1, S2): Rediseño de plantilla HTML y estilos CSS en inPageWidget.ts (layout 384px, radio buttons de formato, tarjeta de estado) con tests. (a5cd904)
+- [/] T2 (S3): Implementación de lista en vivo de comprobantes (addDownloadItem, updateItemStatus) con spinner y badges en inPageWidget.ts y tests. (inline)
 - T3 (S3, S4): Conexión de eventos en content/index.ts para actualizar la lista en vivo en cada paso de descarga. (inline)
 - T4 (S5): Verificación integral, tests de la suite completa y build de producción en dist/. (inline)
 

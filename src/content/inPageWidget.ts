@@ -1,5 +1,6 @@
-import { TaxpayerProfile } from '../domain/types';
+import { TaxpayerProfile, SriVoucher } from '../domain/types';
 import { getDefaultDateRange } from '../domain/dateRangeIterator';
+import { getSriDocumentTypeName } from '../domain/validators';
 
 export interface InPageProgressData {
   total: number;
@@ -307,6 +308,85 @@ export class InPageWidget {
           transition: width 0.2s ease;
         }
 
+        .kattxo-list-container {
+          max-height: 160px;
+          overflow-y: auto;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          background: #ffffff;
+        }
+        .kattxo-download-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+        .kattxo-list-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 6px 10px;
+          border-bottom: 1px solid #f1f5f9;
+          font-size: 11.5px;
+          gap: 8px;
+        }
+        .kattxo-list-item:last-child {
+          border-bottom: none;
+        }
+        .kattxo-item-details {
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          flex: 1;
+        }
+        .kattxo-item-serie {
+          font-weight: 600;
+          color: #111827;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          margin: 0;
+        }
+        .kattxo-item-kind {
+          font-size: 10px;
+          color: #6b7280;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          margin: 0;
+        }
+        .kattxo-spinner {
+          width: 14px;
+          height: 14px;
+          border: 2px solid #e2e8f0;
+          border-top-color: #0c4597;
+          border-radius: 50%;
+          animation: kattxo-spin 0.8s linear infinite;
+          flex-shrink: 0;
+        }
+        @keyframes kattxo-spin {
+          to { transform: rotate(360deg); }
+        }
+        .kattxo-badge-done {
+          background: #dcfce7;
+          color: #166534;
+          padding: 2px 6px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 600;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .kattxo-badge-error {
+          background: #fee2e2;
+          color: #991b1b;
+          padding: 2px 6px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 600;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
         .kattxo-start-btn {
           background: #4f46e5;
           color: #ffffff;
@@ -440,6 +520,10 @@ export class InPageWidget {
             </div>
           </div>
 
+          <div class="kattxo-list-container">
+            <ul class="kattxo-download-list"></ul>
+          </div>
+
           <button type="button" class="kattxo-start-btn">
             <span>⚡ Iniciar Descarga Automática</span>
           </button>
@@ -564,6 +648,69 @@ export class InPageWidget {
 
     if (countEl) countEl.textContent = pendingCount.toString();
     if (banner) banner.style.display = 'flex';
+  }
+
+  public clearDownloadList(): void {
+    if (!this.shadow) return;
+    const list = this.shadow.querySelector('.kattxo-download-list');
+    if (list) list.innerHTML = '';
+  }
+
+  public addDownloadItem(
+    voucher: SriVoucher,
+    status: 'downloading' | 'completed' | 'failed' = 'downloading'
+  ): void {
+    if (!this.shadow) return;
+    const list = this.shadow.querySelector('.kattxo-download-list');
+    if (!list) return;
+
+    let li = list.querySelector(`li[data-id="${voucher.claveAcceso}"]`) as HTMLElement | null;
+    if (!li) {
+      li = document.createElement('li');
+      li.className = 'kattxo-list-item';
+      li.setAttribute('data-id', voucher.claveAcceso);
+
+      const typeName = getSriDocumentTypeName(voucher.tipoComprobante);
+      const serie = voucher.numeroComprobante || voucher.claveAcceso.substring(0, 17);
+      const subtitle = `${typeName} - ${voucher.razonSocialEmisor || voucher.rucEmisor || 'SRI'}`;
+
+      li.innerHTML = `
+        <div class="kattxo-item-details">
+          <p class="kattxo-item-serie">${serie}</p>
+          <p class="kattxo-item-kind">${subtitle}</p>
+        </div>
+        <div class="kattxo-item-status"></div>
+      `;
+      list.appendChild(li);
+    }
+
+    this.renderItemStatusBadge(li, status);
+
+    const container = this.shadow.querySelector('.kattxo-list-container');
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  public updateItemStatus(claveAcceso: string, status: 'downloading' | 'completed' | 'failed'): void {
+    if (!this.shadow) return;
+    const li = this.shadow.querySelector(`li[data-id="${claveAcceso}"]`) as HTMLElement | null;
+    if (li) {
+      this.renderItemStatusBadge(li, status);
+    }
+  }
+
+  private renderItemStatusBadge(li: HTMLElement, status: 'downloading' | 'completed' | 'failed'): void {
+    const statusDiv = li.querySelector('.kattxo-item-status');
+    if (!statusDiv) return;
+
+    if (status === 'downloading') {
+      statusDiv.innerHTML = '<span class="kattxo-spinner"></span>';
+    } else if (status === 'completed') {
+      statusDiv.innerHTML = '<span class="kattxo-badge-done">Descargado</span>';
+    } else {
+      statusDiv.innerHTML = '<span class="kattxo-badge-error">Error</span>';
+    }
   }
 
   public getSelectedFormat(): 'XML' | 'PDF' | 'TXT' {
