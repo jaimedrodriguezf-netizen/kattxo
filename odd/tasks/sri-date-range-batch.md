@@ -10,8 +10,8 @@ Automatización de consultas sucesivas por rango de fechas (Desde/Hasta) en el p
 - S5: Suite de pruebas unitarias automatizadas con Vitest para el iterador de fechas y el motor de consultas por lotes.
 
 ## Tasks
-- T1 (S1, S2): Módulo de iteración de rango de fechas (dateRangeIterator.ts) con tests unitarios. (inline)
-- T2 (S3): Motor de orquestación de consultas continuas (batchQueryRunner.ts) con tests unitarios. (inline)
+- [x] T1 (S1, S2): Módulo de iteración de rango de fechas (dateRangeIterator.ts) con tests unitarios. (cb0c1d5)
+- [/] T2 (S3): Motor de orquestación de consultas continuas (batchQueryRunner.ts) con tests unitarios. (inline)
 - T3 (S1, S4): Integración de inputs de fecha y botón 'Descargar Rango' en InPageWidget y content script. (inline)
 - T4 (S5): Verificación integral, tests de la suite completa y build de producción en dist/. (inline)
 
