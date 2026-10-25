@@ -19,6 +19,10 @@ Forma parte del ecosistema del sistema contable **Kattxo**.
   - Comprobantes de Retención (`07`)
   - Soporte tanto para **Comprobantes Recibidos** como **Comprobantes Emitidos**.
 - **Automatización de Formularios JSF:** Selección programática de dropdowns (Año, Mes, Día y Tipo de Comprobante) y disparo de búsqueda AJAX sin recarga total.
+- **Panel Flotante In-Page de Alta Fidelidad (Shadow DOM):** Interfaz moderna y ergonómica inyectada en el portal del SRI con aislamiento total de estilos:
+  - **Selector de formato por radio buttons:** Selección rápida entre `Extractos XML` (default), `Archivos PDF (RIDE)` y `Reportes TXT`.
+  - **Tarjeta de estado y métricas:** Icono destacado y conteo en vivo de comprobantes procesados (`48 / 48 archivos`).
+  - **Lista scrolleable en tiempo real:** Visualización instantánea de cada comprobante que se va procesando con su número de serie, emisor, animación de carga (`spinner`) y badges de estado (`Descargado` / `Error`).
 - **Compatibilidad Dual de Formularios (Recibidos y Emitidos):** Soporta tanto los dropdowns de Comprobantes Recibidos como los inputs de calendario de texto `DD/MM/YYYY` (`calendarFechaDesde_input` y `calendarFechaHasta_input`) de Comprobantes Emitidos, automatizando ambas vistas con el mismo panel.
 - **Consulta Continua por Rango de Fechas (Desde / Hasta):** Selector interactivo de rango de fechas en el panel flotante que automatiza la búsqueda secuencial día por día o meses completos, sorteando el error de "excedió el número máximo de registros" del SRI mediante ejecución desatendida.
 - **Paginación Automática:** Recorre automáticamente todas las páginas de resultados de RichFaces / PrimeFaces (`.ui-paginator` / `.rich-datascr`).
