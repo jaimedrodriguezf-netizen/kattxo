@@ -104,11 +104,13 @@ export class BatchQueryRunner {
     const doc = this.config.doc || (typeof document !== 'undefined' ? document : null);
     if (!doc) return [];
 
-    // 1. Rellenar formulario con los parámetros de la fecha actual
+    // 1. Rellenar formulario con los parámetros de la fecha actual (dropdowns o calendar inputs)
     fillSriQueryForm(doc, {
       year: step.year,
       month: step.month,
       day: step.day,
+      dateFrom: step.isoString,
+      dateTo: step.isoString,
       documentType: this.config.documentType,
     });
 

@@ -90,4 +90,25 @@ describe('BatchQueryRunner (Continuous Date Query Orchestrator)', () => {
     expect(result.status).toBe('cancelled');
     expect(executedSteps).toHaveLength(1);
   });
+
+  it('populates calendar inputs when running default execute step on emitidos page', async () => {
+    document.body.innerHTML = `
+      <form id="frmPrincipal">
+        <input type="text" id="frmPrincipal:calendarFechaDesde_input" />
+        <input type="text" id="frmPrincipal:calendarFechaHasta_input" />
+        <button id="frmPrincipal:btnBuscar" type="button">Consultar</button>
+      </form>
+    `;
+
+    const runner = new BatchQueryRunner({
+      steps: [steps[0]],
+      interStepDelayMs: 5,
+    });
+
+    // @ts-expect-error test private method directly
+    await runner.defaultExecuteStep(steps[0]);
+
+    const desde = document.getElementById('frmPrincipal:calendarFechaDesde_input') as HTMLInputElement;
+    expect(desde.value).toBe('01/01/2024');
+  });
 });
