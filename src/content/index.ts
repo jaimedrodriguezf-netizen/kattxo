@@ -5,7 +5,9 @@ import {
 } from './parser';
 import { InPageWidget } from './inPageWidget';
 import { triggerSriTxtReportDownload } from './formAutomator';
+import { BatchQueryRunner } from './batchQueryRunner';
 import { vouchersToCsv } from '../domain/csvExporter';
+import { generateDateRangeSteps } from '../domain/dateRangeIterator';
 import {
   ExtensionMessage,
   RetentionsDetectedMessage,
@@ -21,6 +23,7 @@ class SriContentScript {
   private pollingTimer: number | null = null;
   private widget: InPageWidget | null = null;
   private currentTaxpayerProfile: TaxpayerProfile | null = null;
+  private batchRunner: BatchQueryRunner | null = null;
 
   // Estado de descarga en página
   private isDownloading = false;
@@ -48,6 +51,7 @@ class SriContentScript {
       onResumeDownload: () => this.resumeBulkDownload(),
       onExportCsv: () => this.exportDetectedToCsv(),
       onDownloadTxtReport: () => this.downloadSriTxtReport(),
+      onStartBatchRange: (params) => this.startBatchRangeDownload(params),
     });
 
     if (document.body) {
@@ -139,6 +143,33 @@ class SriContentScript {
     triggerSriTxtReportDownload(document);
   }
 
+  public async startBatchRangeDownload(params: { from: string; to: string; documentType: string }): Promise<void> {
+    const steps = generateDateRangeSteps(params.from, params.to);
+    if (steps.length === 0) {
+      console.warn('[Kattxo SRI] Rango de fechas inválido:', params);
+      return;
+    }
+
+    console.log(`[Kattxo SRI] Iniciando consulta continua de ${steps.length} fechas...`);
+    this.widget?.setStatusText(`Lote iniciado: ${steps.length} fechas`);
+
+    this.batchRunner = new BatchQueryRunner({
+      steps,
+      documentType: params.documentType === 'ALL' ? undefined : params.documentType,
+      onStepStart: (step, current, total) => {
+        this.widget?.setStatusText(`Consultando ${step.formattedLabel} (${current}/${total})...`);
+      },
+      onVouchersFound: (newVouchers, step) => {
+        console.log(`[Kattxo SRI] ${newVouchers.length} comprobantes detectados para ${step.formattedLabel}`);
+        this.startBulkDownload(newVouchers);
+      },
+    });
+
+    const result = await this.batchRunner.run();
+    this.widget?.setStatusText(`Completado: ${result.totalFound} comprobantes encontrados`);
+    console.log(`[Kattxo SRI] Consulta continua finalizada con estado: ${result.status}`);
+  }
+
   public async startBulkDownload(vouchers?: SriVoucher[]): Promise<void> {
     if (this.isDownloading) return;
 
@@ -223,12 +254,14 @@ class SriContentScript {
   public pauseBulkDownload(): void {
     this.isPaused = true;
     this.isDownloading = false;
+    this.batchRunner?.pause();
     this.broadcastProgress(this.downloadVouchersList.length, this.currentDownloadIndex, 0, undefined, false);
   }
 
   public resumeBulkDownload(): void {
     if (this.isPaused) {
       this.isPaused = false;
+      this.batchRunner?.resume();
       this.startBulkDownload(this.downloadVouchersList);
     }
   }

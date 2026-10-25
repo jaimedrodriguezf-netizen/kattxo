@@ -126,6 +126,37 @@ describe('InPageWidget (Shadow DOM Floating Panel)', () => {
     expect(txtClicked).toBe(true);
   });
 
+  it('triggers onStartBatchRange callback with from, to, and docType when batch button is clicked', () => {
+    let batchParams: { from: string; to: string; documentType: string } | null = null;
+
+    const widget = new InPageWidget({
+      onStartBatchRange: (params) => {
+        batchParams = params;
+      },
+    });
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+
+    const fromInput = shadow.querySelector<HTMLInputElement>('.kattxo-date-from')!;
+    const toInput = shadow.querySelector<HTMLInputElement>('.kattxo-date-to')!;
+    const typeSelect = shadow.querySelector<HTMLSelectElement>('.kattxo-doc-type-select')!;
+    const batchBtn = shadow.querySelector<HTMLButtonElement>('.kattxo-batch-range-btn')!;
+
+    fromInput.value = '2024-03-01';
+    toInput.value = '2024-03-15';
+    typeSelect.value = '01';
+
+    batchBtn.click();
+
+    expect(batchParams).toEqual({
+      from: '2024-03-01',
+      to: '2024-03-15',
+      documentType: '01',
+    });
+  });
+
   it('does not create duplicate hosts if mounted multiple times', () => {
     const widget = new InPageWidget();
     widget.mount(document.body);

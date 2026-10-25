@@ -1,4 +1,5 @@
 import { TaxpayerProfile } from '../domain/types';
+import { getDefaultDateRange } from '../domain/dateRangeIterator';
 
 export interface InPageProgressData {
   total: number;
@@ -15,6 +16,7 @@ export interface InPageWidgetOptions {
   onResumeDownload?: () => void;
   onExportCsv?: () => void;
   onDownloadTxtReport?: () => void;
+  onStartBatchRange?: (params: { from: string; to: string; documentType: string }) => void;
 }
 
 /**
@@ -49,6 +51,7 @@ export class InPageWidget {
 
   private render(): void {
     if (!this.shadow) return;
+    const defaultRange = getDefaultDateRange();
 
     this.shadow.innerHTML = `
       <style>
@@ -241,6 +244,21 @@ export class InPageWidget {
             </select>
           </div>
 
+          <div style="display: flex; gap: 8px;">
+            <div class="kattxo-form-group" style="flex: 1;">
+              <label class="kattxo-label">Desde</label>
+              <input type="date" class="kattxo-select kattxo-date-from" value="${defaultRange.from}" />
+            </div>
+            <div class="kattxo-form-group" style="flex: 1;">
+              <label class="kattxo-label">Hasta</label>
+              <input type="date" class="kattxo-select kattxo-date-to" value="${defaultRange.to}" />
+            </div>
+          </div>
+
+          <button type="button" class="kattxo-start-btn kattxo-batch-range-btn" style="background: #0284c7;">
+            <span>📅 Consultar y Descargar Rango</span>
+          </button>
+
           <div class="kattxo-progress-section">
             <div class="kattxo-progress-header">
               <span class="kattxo-status-label">Listo</span>
@@ -295,6 +313,19 @@ export class InPageWidget {
       }
     });
 
+    const batchBtn = this.shadow.querySelector('.kattxo-batch-range-btn');
+    const fromInput = this.shadow.querySelector<HTMLInputElement>('.kattxo-date-from');
+    const toInput = this.shadow.querySelector<HTMLInputElement>('.kattxo-date-to');
+
+    batchBtn?.addEventListener('click', () => {
+      const from = fromInput?.value || '';
+      const to = toInput?.value || '';
+      const docType = select ? select.value : 'ALL';
+      if (this.options.onStartBatchRange) {
+        this.options.onStartBatchRange({ from, to, documentType: docType });
+      }
+    });
+
     const pauseBtn = this.shadow.querySelector('.kattxo-pause-btn');
     pauseBtn?.addEventListener('click', () => {
       if (this.options.onPauseDownload) {
@@ -334,6 +365,14 @@ export class InPageWidget {
     }
     if (nameEl) {
       nameEl.textContent = profile.razonSocial || 'Contribuyente autenticado';
+    }
+  }
+
+  public setStatusText(text: string): void {
+    if (!this.shadow) return;
+    const statusLabel = this.shadow.querySelector('.kattxo-status-label');
+    if (statusLabel) {
+      statusLabel.textContent = text;
     }
   }
 

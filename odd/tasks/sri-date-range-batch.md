@@ -11,8 +11,8 @@ Automatización de consultas sucesivas por rango de fechas (Desde/Hasta) en el p
 
 ## Tasks
 - [x] T1 (S1, S2): Módulo de iteración de rango de fechas (dateRangeIterator.ts) con tests unitarios. (cb0c1d5)
-- [/] T2 (S3): Motor de orquestación de consultas continuas (batchQueryRunner.ts) con tests unitarios. (inline)
-- T3 (S1, S4): Integración de inputs de fecha y botón 'Descargar Rango' en InPageWidget y content script. (inline)
+- [x] T2 (S3): Motor de orquestación de consultas continuas (batchQueryRunner.ts) con tests unitarios. (4f64510)
+- [/] T3 (S1, S4): Integración de inputs de fecha y botón 'Descargar Rango' en InPageWidget y content script. (inline)
 - T4 (S5): Verificación integral, tests de la suite completa y build de producción en dist/. (inline)
 
 ## Log
