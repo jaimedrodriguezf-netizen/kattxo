@@ -12,8 +12,8 @@ Generación de reportes tabulares de comprobantes en formato CSV compatible con 
 ## Tasks
 - [x] T1 (S1, S4): Módulo de exportación CSV (csvExporter.ts) con tipado, BOM UTF-8, sanitización de comillas y tests unitarios. (47a081e)
 - [x] T2 (S2): Disparador y extractor del reporte TXT oficial del SRI en formAutomator.ts con tests. (47a081e)
-- [/] T3 (S3): Integración de botones 'Exportar CSV' y 'Descargar TXT SRI' en InPageWidget y Popup UI. (inline)
-- T4 (S5): Verificación integral, tests de la suite completa y build de producción en dist/. (inline)
+- [x] T3 (S3): Integración de botones 'Exportar CSV' y 'Descargar TXT SRI' en InPageWidget y Popup UI. (d4632a2)
+- [x] T4 (S5): Verificación integral, tests de la suite completa y build de producción en dist/. (47a081e, d4632a2)
 
 ## Log
 - L1: Usuario selecciona: "1. Exportador CSV/Excel + Reporte TXT del SRI (value: kattxo_excel_txt)".
