@@ -11,9 +11,9 @@ Página de opciones del sistema Kattxo SRI (options.html) con registro históric
 - S6: Pruebas unitarias completas con Vitest para el gestor de historial y preferencias.
 
 ## Tasks
-- T1 (S2): Modelo de datos de historial y módulo historyManager.ts con pruebas unitarias. (inline)
-- T2 (S3, S4): Lógica de reanudación y configuración de preferencias de usuario con tests. (inline)
-- T3 (S1, S5): Creación de options.html, estilos y controlador src/options/index.ts. (inline)
+- [x] T1 (S2): Modelo de datos de historial y módulo historyManager.ts con pruebas unitarias. (4706b88)
+- [x] T2 (S3, S4): Lógica de reanudación y configuración de preferencias de usuario con tests. (4706b88)
+- [/] T3 (S1, S5): Creación de options.html, estilos y controlador src/options/index.ts. (inline)
 - T4 (S6): Integración en vite.config.ts, verificación integral de tests y build de producción en dist/. (inline)
 
 ## Log

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kattxo SRI - Historial y Configuración</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --border: #e2e8f0;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 40px;
+    }
+
+    header {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 18px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+    }
+
+    .brand-title h1 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .brand-title p {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .main-container {
+      max-width: 960px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 10px 16px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--primary);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn-outline {
+      background: #ffffff;
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover {
+      background: #f1f5f9;
+    }
+    .btn-danger {
+      background: #fee2e2;
+      color: var(--danger);
+      border-color: #fca5a5;
+    }
+    .btn-danger:hover {
+      background: #fecaca;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .history-table th, .history-table td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .status-badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .status-completed {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .status-partial {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .status-interrupted, .status-failed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .form-help {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .form-input {
+      width: 100%;
+      max-width: 400px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .form-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--muted);
+    }
+    .empty-state p {
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-badge">K</div>
+      <div class="brand-title">
+        <h1>Kattxo SRI</h1>
+        <p>Panel de Historial y Preferencias</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <nav class="nav-tabs">
+      <button type="button" class="tab-btn active" data-tab="tab-history">📑 Historial de Descargas</button>
+      <button type="button" class="tab-btn" data-tab="tab-settings">⚙️ Configuración</button>
+    </nav>
+
+    <!-- Tab Historial -->
+    <section id="tab-history" class="tab-content active">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Sesiones de Descarga Realizadas</h2>
+          <button id="btn-clear-history" class="btn btn-danger">Limpiar Historial</button>
+        </div>
+
+        <div id="history-list-container">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Fecha / Hora</th>
+                <th>RUC Contribuyente</th>
+                <th>Tipo / Rango</th>
+                <th>Completados</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody">
+              <!-- Render dinámico -->
+            </tbody>
+          </table>
+          <div id="history-empty" class="empty-state" style="display: none;">
+            <span>📭</span>
+            <p>Aún no hay descargas registradas en el historial.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab Configuración -->
+    <section id="tab-settings" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Preferencias de Descarga y Almacenamiento</h2>
+        </div>
+
+        <form id="settings-form">
+          <div class="form-group">
+            <label class="form-label" for="setting-subdir">Directorio Base de Descarga</label>
+            <input type="text" id="setting-subdir" class="form-input" value="Kattxo" />
+            <p class="form-help">Subcarpeta dentro de tu directorio de descargas local (ej: <code>Kattxo</code>).</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="setting-throttle">Tiempo de Espera entre Peticiones (ms)</label>
+            <input type="number" id="setting-throttle" class="form-input" value="1200" min="300" max="10000" step="100" />
+            <p class="form-help">Retardo de cortesía para evitar baneos o caídas de sesión del SRI (recomendado: 1200ms).</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-checkbox">
+              <input type="checkbox" id="setting-download-pdf" />
+              <span>Descargar automáticamente RIDE (PDF) además del XML firmado</span>
+            </label>
+          </div>
+
+          <button type="submit" id="btn-save-settings" class="btn btn-primary">Guardar Configuración</button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="./src/options/index.ts"></script>
+</body>
+</html>
