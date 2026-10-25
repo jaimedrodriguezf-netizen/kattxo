@@ -19,18 +19,26 @@ Forma parte del ecosistema del sistema contable **Kattxo**.
   - Comprobantes de Retención (`07`)
   - Soporte tanto para **Comprobantes Recibidos** como **Comprobantes Emitidos**.
 - **Automatización de Formularios JSF:** Selección programática de dropdowns (Año, Mes, Día y Tipo de Comprobante) y disparo de búsqueda AJAX sin recarga total.
+- **Compatibilidad Dual de Formularios (Recibidos y Emitidos):** Soporta tanto los dropdowns de Comprobantes Recibidos como los inputs de calendario de texto `DD/MM/YYYY` (`calendarFechaDesde_input` y `calendarFechaHasta_input`) de Comprobantes Emitidos, automatizando ambas vistas con el mismo panel.
 - **Consulta Continua por Rango de Fechas (Desde / Hasta):** Selector interactivo de rango de fechas en el panel flotante que automatiza la búsqueda secuencial día por día o meses completos, sorteando el error de "excedió el número máximo de registros" del SRI mediante ejecución desatendida.
 - **Paginación Automática:** Recorre automáticamente todas las páginas de resultados de RichFaces / PrimeFaces (`.ui-paginator` / `.rich-datascr`).
-- **Organización Jerárquica en Disco:**
+- **Organización Jerárquica y Segregación Contable en Disco:**
   Estructura automática en la carpeta de descargas:
   ```
   Descargas/
     └── Kattxo/
-        └── [RUC_Contribuyente]/
-            └── [Año]/
-                └── [Mes]/
-                    └── [Tipo_Documento]/
-                        └── [prefijo]_[numero]_[claveAcceso].xml (o .pdf)
+        ├── Recibidos/
+        │     └── [RUC_Contribuyente]/
+        │         └── [Año]/
+        │             └── [Mes]/
+        │                 └── [Tipo_Documento]/
+        │                     └── [prefijo]_[numero]_[claveAcceso].xml (o .pdf)
+        └── Emitidos/
+              └── [RUC_Contribuyente]/
+                  └── [Año]/
+                      └── [Mes]/
+                          └── [Tipo_Documento]/
+                              └── [prefijo]_[numero]_[claveAcceso].xml (o .pdf)
   ```
 - **Motor de Cola con Throttling Inteligente:** Para evitar bloqueos temporales por el WAF del SRI o caídas de sesión (errores 429/500), las descargas se ejecutan de manera secuencial y espaciada con pausas configuradas.
 - **Validación de Integridad XML:** Antes de almacenar un archivo, el background worker valida que la respuesta sea un XML tributario auténtico del SRI, evitando que páginas HTML de error de sesión se guarden como archivos corruptos.

@@ -12,8 +12,8 @@ Soporte completo para las dos pantallas principales del portal SRI en Línea: Co
 ## Tasks
 - [x] T1 (S1): Lógica de inputs de calendario (calendarFechaDesde / calendarFechaHasta) en formAutomator.ts con tests unitarios. (6aaa056)
 - [x] T2 (S2, S4): Adaptación de BatchQueryRunner y content/index.ts para envío dual de fechas y detección de página con tests. (f528255)
-- [/] T3 (S3): Enrutamiento jerárquico segregado por Recibidos/Emitidos en validators.ts y downloadRouter.ts con tests. (inline)
-- T4 (S5): Verificación integral, tests de la suite completa y build de producción en dist/. (inline)
+- [x] T3 (S3): Enrutamiento jerárquico segregado por Recibidos/Emitidos en validators.ts y downloadRouter.ts con tests. (47bb855)
+- [x] T4 (S5): Verificación integral, tests de la suite completa y build de producción en dist/. (6aaa056, f528255, 47bb855)
 
 ## Log
 - L1: Usuario confirma: "si dale" para implementar la compatibilidad dual con Comprobantes Emitidos y la separación contable en carpetas.
