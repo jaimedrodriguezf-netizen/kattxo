@@ -1,6 +1,6 @@
-# Kattxo SRI - Extensión de Google Chrome
+# Kattxo SRI - Extensión de Google Chrome (Descarga Masiva Multi-Comprobante)
 
-Plugin de Google Chrome (Manifest V3) desarrollado en **TypeScript** con **Vite** para la descarga masiva y controlada de comprobantes electrónicos de **Retención (XML)** desde el portal oficial del **SRI en Línea (Ecuador)**.
+Plugin de Google Chrome (Manifest V3) desarrollado en **TypeScript** con **Vite** para la descarga masiva y controlada de comprobantes electrónicos (**Facturas, Retenciones, Notas de Crédito/Débito, Liquidaciones y Guías**) en formato **XML y RIDE (PDF)** directamente desde el portal oficial del **SRI en Línea (Ecuador)**.
 
 Forma parte del ecosistema del sistema contable **Kattxo**.
 
@@ -9,15 +9,31 @@ Forma parte del ecosistema del sistema contable **Kattxo**.
 ## 🚀 Características Principales
 
 - **Aprovechamiento de Sesión Activa:** Opera directamente en el navegador del usuario en `srienlinea.sri.gob.ec`. No requiere ingresar contraseñas, tokens bancarios ni resolver CAPTCHAs en servidores externos.
-- **Detección Automática de Retenciones:** Content script resiliente con `MutationObserver` que detecta la tabla de resultados de comprobantes de retención (código de documento `07`) y descompone la clave de acceso de 49 dígitos para extraer emisor, fecha y secuencial.
+- **Panel Flotante Integrado (In-Page Shadow DOM):** Widget flotante moderno inyectado directamente en el portal del SRI (esquina inferior derecha), aislado con Shadow DOM para evitar conflictos de estilos con JSF/Mojarra. Permite iniciar descargas, pausar/reanudar y ver el progreso en tiempo real sin salir de la página.
+- **Soporte Multi-Comprobante Universal:**
+  - Facturas (`01`)
+  - Liquidaciones de Compra (`03`)
+  - Notas de Crédito (`04`)
+  - Notas de Débito (`05`)
+  - Guías de Remisión (`06`)
+  - Comprobantes de Retención (`07`)
+  - Soporte tanto para **Comprobantes Recibidos** como **Comprobantes Emitidos**.
+- **Automatización de Formularios JSF:** Selección programática de dropdowns (Año, Mes, Día y Tipo de Comprobante) y disparo de búsqueda AJAX sin recarga total.
+- **Paginación Automática:** Recorre automáticamente todas las páginas de resultados de RichFaces / PrimeFaces (`.ui-paginator` / `.rich-datascr`).
+- **Organización Jerárquica en Disco:**
+  Estructura automática en la carpeta de descargas:
+  ```
+  Descargas/
+    └── Kattxo/
+        └── [RUC_Contribuyente]/
+            └── [Año]/
+                └── [Mes]/
+                    └── [Tipo_Documento]/
+                        └── [prefijo]_[numero]_[claveAcceso].xml (o .pdf)
+  ```
 - **Motor de Cola con Throttling Inteligente:** Para evitar bloqueos temporales por el WAF del SRI o caídas de sesión (errores 429/500), las descargas se ejecutan de manera secuencial y espaciada con pausas configuradas.
-- **Validación de Integridad XML:** Antes de almacenar un archivo, el background worker valida que la respuesta sea un XML tributario auténtico del SRI (`<comprobanteRetencion>` o `<autorizacion>`), evitando que páginas HTML de error de sesión se guarden como archivos corruptos.
-- **Descargas Nativas:** Utiliza la API `chrome.downloads` para almacenar los archivos ordenadamente en `Descargas/Kattxo/Retenciones/`.
-- **Panel de Control Popup:**
-  - Contador de comprobantes detectados en la pestaña actual.
-  - Barra de progreso porcentual y conteo en tiempo real (total, pendientes, completados, fallidos).
-  - Botones para Iniciar, Pausar / Reanudar y Limpiar cola.
-  - Registro visible de errores si algún comprobante falla tras los reintentos.
+- **Validación de Integridad XML:** Antes de almacenar un archivo, el background worker valida que la respuesta sea un XML tributario auténtico del SRI, evitando que páginas HTML de error de sesión se guarden como archivos corruptos.
+- **Panel de Control Dual (Popup + In-Page):** Disponible tanto desde el icono de extensiones de Chrome como mediante el widget flotante inyectado en el portal.
 
 ---
 

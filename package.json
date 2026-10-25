@@ -1,7 +1,7 @@
 {
   "name": "kattxo-sri-extension",
-  "version": "0.2.0",
-  "description": "Chrome extension para descarga masiva de retenciones XML del SRI (Ecuador)",
+  "version": "0.3.0",
+  "description": "Chrome extension para descarga masiva de comprobantes electrónicos (XML & RIDE) del SRI (Ecuador)",
   "type": "module",
   "scripts": {
     "dev": "vite build --watch",
