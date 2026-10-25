@@ -4,13 +4,15 @@ import {
   extractTaxpayerProfileFromDom,
 } from './parser';
 import { InPageWidget } from './inPageWidget';
+import { triggerSriTxtReportDownload } from './formAutomator';
+import { vouchersToCsv } from '../domain/csvExporter';
 import {
   ExtensionMessage,
   RetentionsDetectedMessage,
   MessageResponse,
   DownloadProgressUpdateMessage,
 } from '../domain/messages';
-import { RetentionVoucher, SriVoucher } from '../domain/types';
+import { RetentionVoucher, SriVoucher, TaxpayerProfile } from '../domain/types';
 
 class SriContentScript {
   private lastDetectedKeys: Set<string> = new Set();
@@ -18,6 +20,7 @@ class SriContentScript {
   private debounceTimer: number | null = null;
   private pollingTimer: number | null = null;
   private widget: InPageWidget | null = null;
+  private currentTaxpayerProfile: TaxpayerProfile | null = null;
 
   // Estado de descarga en página
   private isDownloading = false;
@@ -43,6 +46,8 @@ class SriContentScript {
       },
       onPauseDownload: () => this.pauseBulkDownload(),
       onResumeDownload: () => this.resumeBulkDownload(),
+      onExportCsv: () => this.exportDetectedToCsv(),
+      onDownloadTxtReport: () => this.downloadSriTxtReport(),
     });
 
     if (document.body) {
@@ -69,8 +74,11 @@ class SriContentScript {
   public scanAndNotify(): void {
     const vouchers = this.scan();
     const profile = extractTaxpayerProfileFromDom(document);
-    if (profile && this.widget) {
-      this.widget.setTaxpayerProfile(profile);
+    if (profile) {
+      this.currentTaxpayerProfile = profile;
+      if (this.widget) {
+        this.widget.setTaxpayerProfile(profile);
+      }
     }
 
     const currentKeys = new Set(vouchers.map((r) => r.claveAcceso));
@@ -104,6 +112,31 @@ class SriContentScript {
         console.warn('[Kattxo SRI] Error enviando mensaje a la extensión:', err);
       }
     }
+  }
+
+  public exportDetectedToCsv(): void {
+    const vouchers = this.scan();
+    if (vouchers.length === 0) {
+      console.warn('[Kattxo SRI] No hay comprobantes detectados para exportar.');
+      return;
+    }
+
+    const csvContent = vouchersToCsv(vouchers);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const ruc = this.currentTaxpayerProfile?.ruc || 'SRI';
+    link.download = `reporte_comprobantes_${ruc}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    console.log(`[Kattxo SRI] Reporte CSV exportado exitosamente (${vouchers.length} registros).`);
+  }
+
+  public downloadSriTxtReport(): void {
+    triggerSriTxtReportDownload(document);
   }
 
   public async startBulkDownload(vouchers?: SriVoucher[]): Promise<void> {
@@ -308,6 +341,12 @@ class SriContentScript {
         if (message.type === 'RESUME_IN_PAGE_DOWNLOAD') {
           this.resumeBulkDownload();
           sendResponse({ success: true, data: { status: 'resumed' } });
+          return true;
+        }
+
+        if (message.type === 'DOWNLOAD_SRI_TXT_REQUEST') {
+          this.downloadSriTxtReport();
+          sendResponse({ success: true, data: { status: 'txt_requested' } });
           return true;
         }
 

@@ -12,7 +12,8 @@ export type ExtensionMessageType =
   | 'START_IN_PAGE_DOWNLOAD'
   | 'PAUSE_IN_PAGE_DOWNLOAD'
   | 'RESUME_IN_PAGE_DOWNLOAD'
-  | 'DOWNLOAD_PROGRESS_UPDATE';
+  | 'DOWNLOAD_PROGRESS_UPDATE'
+  | 'DOWNLOAD_SRI_TXT_REQUEST';
 
 export interface BaseMessage {
   type: ExtensionMessageType;
@@ -86,6 +87,10 @@ export interface ScanPageRequestMessage extends BaseMessage {
   type: 'SCAN_PAGE_REQUEST';
 }
 
+export interface DownloadSriTxtRequestMessage extends BaseMessage {
+  type: 'DOWNLOAD_SRI_TXT_REQUEST';
+}
+
 export type ExtensionMessage =
   | RetentionsDetectedMessage
   | StartDownloadQueueMessage
@@ -98,7 +103,8 @@ export type ExtensionMessage =
   | StartInPageDownloadMessage
   | PauseInPageDownloadMessage
   | ResumeInPageDownloadMessage
-  | DownloadProgressUpdateMessage;
+  | DownloadProgressUpdateMessage
+  | DownloadSriTxtRequestMessage;
 
 export interface MessageResponse<T = unknown> {
   success: boolean;

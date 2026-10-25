@@ -10,9 +10,9 @@ Generación de reportes tabulares de comprobantes en formato CSV compatible con 
 - S5: Suite de pruebas unitarias automatizadas con Vitest para el formateador CSV y el disparador de reporte TXT.
 
 ## Tasks
-- T1 (S1, S4): Módulo de exportación CSV (csvExporter.ts) con tipado, BOM UTF-8, sanitización de comillas y tests unitarios. (inline)
-- T2 (S2): Disparador y extractor del reporte TXT oficial del SRI en formAutomator.ts con tests. (inline)
-- T3 (S3): Integración de botones 'Exportar CSV' y 'Descargar TXT SRI' en InPageWidget y Popup UI. (inline)
+- [x] T1 (S1, S4): Módulo de exportación CSV (csvExporter.ts) con tipado, BOM UTF-8, sanitización de comillas y tests unitarios. (47a081e)
+- [x] T2 (S2): Disparador y extractor del reporte TXT oficial del SRI en formAutomator.ts con tests. (47a081e)
+- [/] T3 (S3): Integración de botones 'Exportar CSV' y 'Descargar TXT SRI' en InPageWidget y Popup UI. (inline)
 - T4 (S5): Verificación integral, tests de la suite completa y build de producción en dist/. (inline)
 
 ## Log

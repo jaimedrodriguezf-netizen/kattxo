@@ -6,8 +6,10 @@ import {
   StartInPageDownloadMessage,
   PauseInPageDownloadMessage,
   ResumeInPageDownloadMessage,
+  DownloadSriTxtRequestMessage,
 } from '../domain/messages';
 import { QueueState, QueueStats, RetentionVoucher } from '../domain/types';
+import { vouchersToCsv } from '../domain/csvExporter';
 
 export function calculateProgressPercentage(stats: QueueStats): number {
   if (!stats || stats.total === 0) return 0;
@@ -41,6 +43,8 @@ export class PopupController {
     document.getElementById('btn-start')?.addEventListener('click', () => this.startDownload());
     document.getElementById('btn-pause')?.addEventListener('click', () => this.togglePause());
     document.getElementById('btn-clear')?.addEventListener('click', () => this.clearQueue());
+    document.getElementById('btn-export-csv')?.addEventListener('click', () => this.exportCsv());
+    document.getElementById('btn-txt-report')?.addEventListener('click', () => this.requestSriTxtDownload());
 
     // Escuchar mensajes broadcast del Background y del Content Script
     if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
@@ -125,6 +129,47 @@ export class PopupController {
         this.render();
       }
     });
+  }
+
+  public exportCsv(): void {
+    if (this.detectedRetenciones.length === 0) {
+      return;
+    }
+
+    try {
+      const csvContent = vouchersToCsv(this.detectedRetenciones);
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `reporte_comprobantes_kattxo.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error exportando CSV:', err);
+    }
+  }
+
+  public requestSriTxtDownload(): void {
+    if (!this.activeTabId || !this.isSriTab) {
+      return;
+    }
+
+    const message: DownloadSriTxtRequestMessage = {
+      type: 'DOWNLOAD_SRI_TXT_REQUEST',
+    };
+
+    try {
+      chrome.tabs.sendMessage(this.activeTabId, message, () => {
+        if (chrome.runtime.lastError) {
+          // noop
+        }
+      });
+    } catch (err) {
+      console.warn('Error enviando mensaje de reporte TXT:', err);
+    }
   }
 
   public startDownload(): void {

@@ -13,6 +13,8 @@ export interface InPageWidgetOptions {
   onStartDownload?: (documentType: string) => void;
   onPauseDownload?: () => void;
   onResumeDownload?: () => void;
+  onExportCsv?: () => void;
+  onDownloadTxtReport?: () => void;
 }
 
 /**
@@ -257,6 +259,11 @@ export class InPageWidget {
             <button type="button" class="kattxo-action-btn kattxo-pause-btn">Pausar</button>
             <button type="button" class="kattxo-action-btn kattxo-resume-btn">Reanudar</button>
           </div>
+
+          <div class="kattxo-btn-row">
+            <button type="button" class="kattxo-action-btn kattxo-export-csv-btn" title="Exportar comprobantes detectados a CSV para Excel">📊 Exportar CSV</button>
+            <button type="button" class="kattxo-action-btn kattxo-txt-report-btn" title="Descargar reporte TXT generado por el SRI">📄 Reporte TXT SRI</button>
+          </div>
         </div>
       </div>
     `;
@@ -299,6 +306,20 @@ export class InPageWidget {
     resumeBtn?.addEventListener('click', () => {
       if (this.options.onResumeDownload) {
         this.options.onResumeDownload();
+      }
+    });
+
+    const exportCsvBtn = this.shadow.querySelector('.kattxo-export-csv-btn');
+    exportCsvBtn?.addEventListener('click', () => {
+      if (this.options.onExportCsv) {
+        this.options.onExportCsv();
+      }
+    });
+
+    const txtReportBtn = this.shadow.querySelector('.kattxo-txt-report-btn');
+    txtReportBtn?.addEventListener('click', () => {
+      if (this.options.onDownloadTxtReport) {
+        this.options.onDownloadTxtReport();
       }
     });
   }

@@ -100,6 +100,32 @@ describe('InPageWidget (Shadow DOM Floating Panel)', () => {
     expect(selectedType).toBe('ALL');
   });
 
+  it('triggers onExportCsv and onDownloadTxtReport callbacks when clicked', () => {
+    let csvClicked = false;
+    let txtClicked = false;
+
+    const widget = new InPageWidget({
+      onExportCsv: () => {
+        csvClicked = true;
+      },
+      onDownloadTxtReport: () => {
+        txtClicked = true;
+      },
+    });
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const csvBtn = shadow.querySelector<HTMLButtonElement>('.kattxo-export-csv-btn')!;
+    const txtBtn = shadow.querySelector<HTMLButtonElement>('.kattxo-txt-report-btn')!;
+
+    csvBtn.click();
+    txtBtn.click();
+
+    expect(csvClicked).toBe(true);
+    expect(txtClicked).toBe(true);
+  });
+
   it('does not create duplicate hosts if mounted multiple times', () => {
     const widget = new InPageWidget();
     widget.mount(document.body);

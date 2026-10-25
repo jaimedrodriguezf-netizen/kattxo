@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { calculateProgressPercentage, formatProgressRatio } from '../src/popup/controller';
-import { QueueStats } from '../src/domain/types';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { calculateProgressPercentage, formatProgressRatio, PopupController } from '../src/popup/controller';
+import { QueueStats, SriVoucher } from '../src/domain/types';
 
 describe('Popup Controller Helpers', () => {
   describe('calculateProgressPercentage', () => {
@@ -57,6 +57,37 @@ describe('Popup Controller Helpers', () => {
         isRunning: false,
       };
       expect(formatProgressRatio(stats)).toBe('10 / 15');
+    });
+  });
+
+  describe('PopupController export & TXT actions', () => {
+    it('creates and triggers download link when exportCsv is called with detected vouchers', () => {
+      const controller = new PopupController();
+      const sampleVoucher: SriVoucher = {
+        claveAcceso: '0101202407019000000000120010010000000011234567813',
+        rucEmisor: '0190000000001',
+        razonSocialEmisor: 'EMPRESA EJEMPLO S.A.',
+        numeroComprobante: '001-001-000000001',
+        fechaEmision: '01/01/2024',
+        tipoComprobante: '07',
+      };
+
+      // @ts-expect-error set private detected for test
+      controller.detectedRetenciones = [sampleVoucher];
+
+      let clickedDownload = false;
+      vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+        const el = document.createElementNS('http://www.w3.org/1999/xhtml', tag) as HTMLElement;
+        if (tag === 'a') {
+          el.click = () => {
+            clickedDownload = true;
+          };
+        }
+        return el;
+      });
+
+      controller.exportCsv();
+      expect(clickedDownload).toBe(true);
     });
   });
 });
