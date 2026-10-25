@@ -121,10 +121,20 @@ describe('Domain Validators & Helpers', () => {
       tipoComprobante: '01',
     };
 
-    it('builds structured hierarchical path by default: Kattxo/RUC/Año/Mes/Tipo/Archivo.xml', () => {
+    it('builds structured hierarchical path by default: Kattxo/Recibidos/RUC/Año/Mes/Tipo/Archivo.xml', () => {
       const path = buildSriDownloadPath(facturaVoucher, { taxpayerRuc: '1799999999001' });
       expect(path).toBe(
-        'Kattxo/1799999999001/2024/08/Factura/factura_001-002-000000045_1508202401179000000000120010020000000451234567812.xml'
+        'Kattxo/Recibidos/1799999999001/2024/08/Factura/factura_001-002-000000045_1508202401179000000000120010020000000451234567812.xml'
+      );
+    });
+
+    it('supports Emitidos category segregation: Kattxo/Emitidos/RUC/Año/Mes/Tipo/Archivo.xml', () => {
+      const path = buildSriDownloadPath(facturaVoucher, {
+        taxpayerRuc: '1799999999001',
+        category: 'emitidos',
+      });
+      expect(path).toBe(
+        'Kattxo/Emitidos/1799999999001/2024/08/Factura/factura_001-002-000000045_1508202401179000000000120010020000000451234567812.xml'
       );
     });
 
@@ -134,13 +144,13 @@ describe('Domain Validators & Helpers', () => {
         format: 'pdf',
       });
       expect(path).toBe(
-        'Kattxo/1799999999001/2024/08/Factura/factura_001-002-000000045_1508202401179000000000120010020000000451234567812.pdf'
+        'Kattxo/Recibidos/1799999999001/2024/08/Factura/factura_001-002-000000045_1508202401179000000000120010020000000451234567812.pdf'
       );
     });
 
     it('falls back to emisor RUC if taxpayerRuc is not provided', () => {
       const path = buildSriDownloadPath(facturaVoucher);
-      expect(path).toContain('Kattxo/1790000000001/2024/08/Factura/');
+      expect(path).toContain('Kattxo/Recibidos/1790000000001/2024/08/Factura/');
     });
   });
 

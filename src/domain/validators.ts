@@ -54,8 +54,9 @@ export function isValidRuc(ruc: string): boolean {
 }
 
 /**
- * Genera una ruta jerárquica organizada en disco para la descarga del comprobante.
- * Estructura: [baseDirectory]/[taxpayerRuc]/[Año]/[Mes]/[Tipo]/[prefijo]_[numero]_[clave].[ext]
+ * Genera una ruta jerárquica organizada en disco para la descarga del comprobante,
+ * separando por categoría contable (Recibidos vs Emitidos).
+ * Estructura: [baseDirectory]/[Recibidos|Emitidos]/[taxpayerRuc]/[Año]/[Mes]/[Tipo]/[prefijo]_[numero]_[clave].[ext]
  */
 export function buildSriDownloadPath(
   voucher: SriVoucher,
@@ -65,6 +66,7 @@ export function buildSriDownloadPath(
     baseDirectory = 'Kattxo',
     taxpayerRuc = voucher.rucEmisor || 'SRI',
     format = 'xml',
+    category = voucher.categoria || 'recibidos',
   } = options;
 
   const dateParts = extractDatePartsFromClaveAcceso(voucher.claveAcceso);
@@ -75,9 +77,10 @@ export function buildSriDownloadPath(
   const filename = `${typePrefix}_${numComp}${cleanKey}.${format}`;
 
   const cleanBase = baseDirectory.replace(/^\/+|\/+$/g, '');
+  const categoryDir = category === 'emitidos' ? 'Emitidos' : 'Recibidos';
   const cleanRuc = taxpayerRuc.trim();
 
-  return `${cleanBase}/${cleanRuc}/${dateParts.year}/${dateParts.month}/${typeName}/${filename}`;
+  return `${cleanBase}/${categoryDir}/${cleanRuc}/${dateParts.year}/${dateParts.month}/${typeName}/${filename}`;
 }
 
 /**

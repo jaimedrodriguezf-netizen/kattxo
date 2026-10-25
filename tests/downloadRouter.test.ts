@@ -14,7 +14,7 @@ describe('Dynamic Download Router (onDeterminingFilename)', () => {
 
     const path = resolveDynamicDownloadPath(item, 'Kattxo');
     expect(path).toBe(
-      'Kattxo/0190000000001/2024/01/Retencion/retencion_0101202407019000000000120010010000000011234567813.xml'
+      `Kattxo/Recibidos/0190000000001/2024/01/Retencion/retencion_${validKey}.xml`
     );
   });
 
@@ -22,13 +22,13 @@ describe('Dynamic Download Router (onDeterminingFilename)', () => {
     const facturaKey = '1508202401179000000000120010020000000451234567812';
     const item = {
       id: 2,
-      url: 'https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/ride?id=456',
+      url: 'https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/pages/consultas/emitidos/ride?id=456',
       filename: `ride_${facturaKey}.pdf`,
     } as unknown as chrome.downloads.DownloadItem;
 
     const path = resolveDynamicDownloadPath(item, 'Kattxo');
     expect(path).toBe(
-      'Kattxo/1790000000001/2024/08/Factura/factura_1508202401179000000000120010020000000451234567812.pdf'
+      'Kattxo/Emitidos/1790000000001/2024/08/Factura/factura_1508202401179000000000120010020000000451234567812.pdf'
     );
   });
 
@@ -40,7 +40,7 @@ describe('Dynamic Download Router (onDeterminingFilename)', () => {
     } as unknown as chrome.downloads.DownloadItem;
 
     const path = resolveDynamicDownloadPath(item, 'Kattxo');
-    expect(path).toContain('Kattxo/Reportes/');
+    expect(path).toContain('Kattxo/Recibidos/Reportes/');
     expect(path).toContain('/TXT/reporte_listado_comprobantes.txt');
   });
 

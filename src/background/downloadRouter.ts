@@ -34,8 +34,10 @@ export function resolveDynamicDownloadPath(
     const typeName = getSriDocumentTypeName(typeCode);
     const ext = downloadItem.filename.toLowerCase().endsWith('.pdf') ? 'pdf' : 'xml';
     const cleanBase = baseDirectory.replace(/^\/+|\/+$/g, '');
+    const isEmitidos = url.includes('/emitidos/') || finalUrl.includes('/emitidos/');
+    const categoryDir = isEmitidos ? 'Emitidos' : 'Recibidos';
 
-    return `${cleanBase}/${ruc}/${year}/${month}/${typeName}/${typeName.toLowerCase()}_${key}.${ext}`;
+    return `${cleanBase}/${categoryDir}/${ruc}/${year}/${month}/${typeName}/${typeName.toLowerCase()}_${key}.${ext}`;
   }
 
   // 2. Detección de reporte TXT oficial del SRI
@@ -44,8 +46,10 @@ export function resolveDynamicDownloadPath(
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, '0');
     const cleanBase = baseDirectory.replace(/^\/+|\/+$/g, '');
+    const isEmitidos = url.includes('/emitidos/') || finalUrl.includes('/emitidos/');
+    const categoryDir = isEmitidos ? 'Emitidos' : 'Recibidos';
 
-    return `${cleanBase}/Reportes/${y}/${m}/TXT/${downloadItem.filename}`;
+    return `${cleanBase}/${categoryDir}/Reportes/${y}/${m}/TXT/${downloadItem.filename}`;
   }
 
   return null;
