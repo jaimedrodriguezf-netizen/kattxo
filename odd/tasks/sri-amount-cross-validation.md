@@ -12,8 +12,8 @@ Mecanismo de verificación de integridad y cuadre matemático entre el importe r
 ## Tasks
 - [x] T1 (S1, S2): Funciones parseCurrencyAmount y verifyVoucherAmountMatch en validators.ts con tests unitarios. (636d6cd)
 - [x] T2 (S3): Extracción de columna de importe total en parser.ts y asignación en SriVoucher con tests. (cc2b9a9)
-- [/] T3 (S4): Integración de validación cruzada en el ciclo de descarga de content/index.ts. (inline)
-- T4 (S5): Verificación integral, tests completos de la suite y build de producción en dist/. (inline)
+- [x] T3 (S4): Integración de validación cruzada en el ciclo de descarga de content/index.ts. (d221780)
+- [x] T4 (S5): Verificación integral, tests completos de la suite y build de producción en dist/. (636d6cd, cc2b9a9, d221780)
 
 ## Log
 - L1: Usuario confirma: "ok hazlo" para implementar la validación cruzada de importes descubierta mediante REA.
