@@ -1,0 +1,111 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { InPageWidget, InPageWidgetOptions } from '../src/content/inPageWidget';
+
+describe('InPageWidget (Shadow DOM Floating Panel)', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('mounts inside a ShadowRoot attached to #kattxo-sri-widget-host', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host');
+    expect(host).not.toBeNull();
+    expect(host?.shadowRoot).not.toBeNull();
+
+    const shadow = host?.shadowRoot;
+    expect(shadow?.querySelector('.kattxo-widget-container')).not.toBeNull();
+    expect(shadow?.querySelector('.kattxo-header-title')?.textContent).toContain('Kattxo');
+  });
+
+  it('toggles minimize and expand state', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const toggleBtn = shadow.querySelector<HTMLButtonElement>('.kattxo-toggle-btn')!;
+    const bodyEl = shadow.querySelector<HTMLElement>('.kattxo-widget-body')!;
+
+    expect(bodyEl.style.display).not.toBe('none');
+
+    // Click minimize
+    toggleBtn.click();
+    expect(bodyEl.style.display).toBe('none');
+
+    // Click expand
+    toggleBtn.click();
+    expect(bodyEl.style.display).not.toBe('none');
+  });
+
+  it('updates taxpayer profile display', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    widget.setTaxpayerProfile({
+      ruc: '1790011223001',
+      razonSocial: 'EMPRESA KATTXO S.A.',
+    });
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const taxpayerEl = shadow.querySelector('.kattxo-taxpayer-badge');
+
+    expect(taxpayerEl?.textContent).toContain('1790011223001');
+    expect(taxpayerEl?.textContent).toContain('EMPRESA KATTXO');
+  });
+
+  it('updates progress metrics and bar width', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+
+    widget.updateProgress({
+      total: 10,
+      completed: 4,
+      failed: 1,
+      currentKey: '1234567890',
+      isPaused: false,
+      isFinished: false,
+    });
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+
+    const progressText = shadow.querySelector('.kattxo-progress-text');
+    const progressBar = shadow.querySelector<HTMLElement>('.kattxo-progress-fill');
+
+    expect(progressText?.textContent).toContain('4 / 10');
+    expect(progressBar?.style.width).toBe('40%');
+  });
+
+  it('triggers onStartDownload callback when button is clicked', () => {
+    let triggered = false;
+    let selectedType = '';
+
+    const widget = new InPageWidget({
+      onStartDownload: (type) => {
+        triggered = true;
+        selectedType = type;
+      },
+    });
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const startBtn = shadow.querySelector<HTMLButtonElement>('.kattxo-start-btn')!;
+
+    startBtn.click();
+    expect(triggered).toBe(true);
+    expect(selectedType).toBe('ALL');
+  });
+
+  it('does not create duplicate hosts if mounted multiple times', () => {
+    const widget = new InPageWidget();
+    widget.mount(document.body);
+    widget.mount(document.body);
+
+    const hosts = document.querySelectorAll('#kattxo-sri-widget-host');
+    expect(hosts.length).toBe(1);
+  });
+});

@@ -15,8 +15,8 @@ Extensión de navegador (Manifest V3) para descarga masiva de todos los tipos de
 ## Tasks
 - [x] T1 (S1, S2): Modelo de dominio universal (SriVoucher, SriDocumentType) y enrutador jerárquico de descargas en validators.ts con tests unitarios. (5e89150)
 - [x] T2 (S3, S4): Detección de perfil de contribuyente y parser universal para comprobantes recibidos y emitidos con tests. (f44f9ea)
-- [/] T3 (S5, S6): Motor de automatización de formularios JSF y paginador RichFaces en content script. (inline)
-- T4 (S7): Componente de panel flotante In-Page (Shadow DOM) con barra de progreso, controles y canal de mensajería. (inline)
+- [x] T3 (S5, S6): Motor de automatización de formularios JSF y paginador RichFaces en content script. (719fe1a)
+- [/] T4 (S7): Componente de panel flotante In-Page (Shadow DOM) con barra de progreso, controles y canal de mensajería. (inline)
 - T5 (S1, S2): Soporte opcional para descarga de RIDE (PDF) y orquestación en background worker. (inline)
 - T6 (S8): Verificación integral, tests unitarios completos de la suite y build de producción en dist/. (inline)
 

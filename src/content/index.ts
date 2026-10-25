@@ -1,58 +1,92 @@
-import { extractRetentionsFromDom } from './parser';
+import {
+  extractRetentionsFromDom,
+  extractVouchersFromDom,
+  extractTaxpayerProfileFromDom,
+} from './parser';
+import { InPageWidget } from './inPageWidget';
 import {
   ExtensionMessage,
   RetentionsDetectedMessage,
   MessageResponse,
   DownloadProgressUpdateMessage,
 } from '../domain/messages';
-import { RetentionVoucher } from '../domain/types';
+import { RetentionVoucher, SriVoucher } from '../domain/types';
 
 class SriContentScript {
   private lastDetectedKeys: Set<string> = new Set();
   private observer: MutationObserver | null = null;
   private debounceTimer: number | null = null;
   private pollingTimer: number | null = null;
+  private widget: InPageWidget | null = null;
 
   // Estado de descarga en página
   private isDownloading = false;
   private isPaused = false;
   private currentDownloadIndex = 0;
-  private downloadVouchersList: RetentionVoucher[] = [];
+  private downloadVouchersList: SriVoucher[] = [];
 
   public init(): void {
     console.log('[Kattxo SRI] Content script inicializado en:', window.location.href);
+    this.initWidget();
     this.scanAndNotify();
     this.setupMutationObserver();
     this.setupPolling();
     this.setupMessageListener();
   }
 
-  public scan(): RetentionVoucher[] {
+  private initWidget(): void {
+    if (typeof document === 'undefined') return;
+    this.widget = new InPageWidget({
+      onStartDownload: (docType) => {
+        const vouchers = this.scan(docType);
+        this.startBulkDownload(vouchers);
+      },
+      onPauseDownload: () => this.pauseBulkDownload(),
+      onResumeDownload: () => this.resumeBulkDownload(),
+    });
+
+    if (document.body) {
+      this.widget.mount(document.body);
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        if (document.body && this.widget) {
+          this.widget.mount(document.body);
+        }
+      });
+    }
+  }
+
+  public scan(filterType?: string): SriVoucher[] {
     try {
-      const retenciones = extractRetentionsFromDom(document);
-      return retenciones;
+      const vouchers = extractVouchersFromDom(document, filterType);
+      return vouchers;
     } catch (err) {
-      console.error('[Kattxo SRI] Error extrayendo retenciones del DOM:', err);
+      console.error('[Kattxo SRI] Error extrayendo comprobantes del DOM:', err);
       return [];
     }
   }
 
   public scanAndNotify(): void {
-    const retenciones = this.scan();
-    const currentKeys = new Set(retenciones.map((r) => r.claveAcceso));
+    const vouchers = this.scan();
+    const profile = extractTaxpayerProfileFromDom(document);
+    if (profile && this.widget) {
+      this.widget.setTaxpayerProfile(profile);
+    }
+
+    const currentKeys = new Set(vouchers.map((r) => r.claveAcceso));
 
     const isDifferent =
       currentKeys.size !== this.lastDetectedKeys.size ||
       Array.from(currentKeys).some((k) => !this.lastDetectedKeys.has(k));
 
-    if (isDifferent && retenciones.length > 0) {
+    if (isDifferent && vouchers.length > 0) {
       this.lastDetectedKeys = currentKeys;
-      console.log(`[Kattxo SRI] ✅ ${retenciones.length} retenciones detectadas en la página.`);
+      console.log(`[Kattxo SRI] ✅ ${vouchers.length} comprobantes detectados en la página.`);
 
       const message: RetentionsDetectedMessage = {
         type: 'RETENTIONS_DETECTED',
         payload: {
-          retenciones,
+          retenciones: vouchers,
           pageUrl: window.location.href,
           timestamp: Date.now(),
         },
@@ -72,12 +106,12 @@ class SriContentScript {
     }
   }
 
-  public async startBulkDownload(vouchers?: RetentionVoucher[]): Promise<void> {
+  public async startBulkDownload(vouchers?: SriVoucher[]): Promise<void> {
     if (this.isDownloading) return;
 
     this.downloadVouchersList = vouchers && vouchers.length > 0 ? vouchers : this.scan();
     if (this.downloadVouchersList.length === 0) {
-      console.warn('[Kattxo SRI] No hay retenciones disponibles para descargar.');
+      console.warn('[Kattxo SRI] No hay comprobantes disponibles para descargar.');
       return;
     }
 
@@ -116,7 +150,7 @@ class SriContentScript {
     console.log(`[Kattxo SRI] Descarga finalizada: ${completed} completados, ${failed} fallidos.`);
   }
 
-  private triggerDownloadForVoucher(voucher: RetentionVoucher, index: number): boolean {
+  private triggerDownloadForVoucher(voucher: SriVoucher, index: number): boolean {
     try {
       // 1. Intentar por elementId guardado
       if (voucher.elementId) {
@@ -184,6 +218,18 @@ class SriContentScript {
         isFinished,
       },
     };
+
+    // Actualizar widget in-page
+    if (this.widget) {
+      this.widget.updateProgress({
+        total,
+        completed,
+        failed,
+        currentKey,
+        isPaused: this.isPaused,
+        isFinished,
+      });
+    }
 
     try {
       if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
