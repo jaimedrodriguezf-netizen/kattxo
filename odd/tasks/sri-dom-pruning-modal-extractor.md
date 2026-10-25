@@ -9,8 +9,8 @@ Refinamientos avanzados para Kattxo SRI: optimización de memoria DOM (poda de l
 - S4: Suite de pruebas unitarias automatizadas con Vitest para el atajo de doble clic, la poda de lista y el extractor de modales.
 
 ## Tasks
-- T1 (S1, S2): Doble clic en cabecera y poda de lista a 100 elementos en inPageWidget.ts con tests unitarios. (inline)
-- T2 (S3): Funciones extractClaveFromModalDialog y closeSriModalDialog en parser.ts con tests unitarios. (inline)
+- [x] T1 (S1, S2): Doble clic en cabecera y poda de lista a 100 elementos en inPageWidget.ts con tests unitarios. (1456ae8)
+- [/] T2 (S3): Funciones extractClaveFromModalDialog y closeSriModalDialog en parser.ts con tests unitarios. (inline)
 - T3 (S4): Verificación integral, tests de la suite completa y build de producción en dist/. (inline)
 
 ## Log

@@ -305,3 +305,45 @@ export function extractVouchersFromDom(
 export function extractRetentionsFromDom(doc: Document = document): RetentionVoucher[] {
   return extractVouchersFromDom(doc, '07');
 }
+
+/**
+ * Extrae la clave de acceso de 49 dígitos que se encuentre dentro de un diálogo modal
+ * emergente de PrimeFaces / RichFaces (.ui-dialog o similar).
+ */
+export function extractClaveFromModalDialog(doc: Document = document): string | null {
+  const dialog = doc.querySelector<HTMLElement>(
+    'div.ui-dialog:not([style*="display: none"]), div.ui-dialog:not([style*="display:none"]), div.rich-modalpanel, div[id="j_idt135"], .ui-dialog'
+  );
+
+  if (!dialog) return null;
+  const text = `${dialog.innerText || ''} ${dialog.textContent || ''}`;
+  const keys = findClavesInText(text);
+  return keys.length > 0 ? keys[0] : null;
+}
+
+/**
+ * Cierra limpiamente cualquier modal de detalle del SRI haciendo clic en la 'X' de la barra de título
+ * o aplicando display: none para evitar bloquear la interfaz del usuario.
+ */
+export function closeSriModalDialog(doc: Document = document): boolean {
+  const dialog = doc.querySelector<HTMLElement>(
+    'div.ui-dialog, div.rich-modalpanel, div[id="j_idt135"], .ui-dialog'
+  );
+
+  if (!dialog) return false;
+
+  const closeBtn = dialog.querySelector<HTMLElement>(
+    'a.ui-dialog-titlebar-close, .ui-dialog-titlebar-close, button.ui-dialog-titlebar-close, a[onclick*="hide"], button[title*="cerrar" i]'
+  );
+
+  if (closeBtn) {
+    closeBtn.click();
+    return true;
+  }
+
+  // Fallback: ocultar directamente
+  dialog.style.display = 'none';
+  dialog.style.visibility = 'hidden';
+  return true;
+}
+

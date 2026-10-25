@@ -4,6 +4,8 @@ import {
   extractRetentionsFromDom,
   extractVouchersFromDom,
   extractTaxpayerProfileFromDom,
+  extractClaveFromModalDialog,
+  closeSriModalDialog,
   findClavesInText,
 } from '../src/content/parser';
 
@@ -262,6 +264,49 @@ describe('SRI Parser & Clave de Acceso Decomposition', () => {
       document.body.innerHTML = '<div>Página no autenticada</div>';
       const profile = extractTaxpayerProfileFromDom(document);
       expect(profile).toBeNull();
+    });
+  });
+
+  describe('Modal Dialog Extractor & Closer (PrimeFaces / RichFaces)', () => {
+    it('extracts 49-digit clave from open PrimeFaces dialog modal', () => {
+      document.body.innerHTML = `
+        <div class="ui-dialog" style="display: block;">
+          <div class="ui-dialog-titlebar">
+            <span>Detalle de Comprobante</span>
+            <a class="ui-dialog-titlebar-close" href="#">✕</a>
+          </div>
+          <div class="ui-dialog-content">
+            <p>Clave de Acceso: ${sampleKeyFactura}</p>
+            <p>Autorización: AUTORIZADO</p>
+          </div>
+        </div>
+      `;
+
+      const key = extractClaveFromModalDialog(document);
+      expect(key).toBe(sampleKeyFactura);
+    });
+
+    it('closes the modal dialog by clicking close button or hiding element', () => {
+      let closeClicked = false;
+      document.body.innerHTML = `
+        <div class="ui-dialog" style="display: block;">
+          <a class="ui-dialog-titlebar-close" href="#">✕</a>
+        </div>
+      `;
+
+      document.querySelector('.ui-dialog-titlebar-close')?.addEventListener('click', () => {
+        closeClicked = true;
+      });
+
+      const closed = closeSriModalDialog(document);
+      expect(closed).toBe(true);
+      expect(closeClicked).toBe(true);
+    });
+
+    it('returns null if no modal dialog is present in DOM', () => {
+      document.body.innerHTML = '<div>Sin modales</div>';
+      expect(extractClaveFromModalDialog(document)).toBeNull();
+      expect(closeSriModalDialog(document)).toBe(false);
     });
   });
 });
