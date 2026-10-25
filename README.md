@@ -22,7 +22,10 @@ Forma parte del ecosistema del sistema contable **Kattxo**.
 - **Panel Flotante In-Page de Alta Fidelidad (Shadow DOM):** Interfaz moderna y ergonómica inyectada en el portal del SRI con aislamiento total de estilos:
   - **Selector de formato por radio buttons:** Selección rápida entre `Extractos XML` (default), `Archivos PDF (RIDE)` y `Reportes TXT`.
   - **Tarjeta de estado y métricas:** Icono destacado y conteo en vivo de comprobantes procesados (`48 / 48 archivos`).
-  - **Lista scrolleable en tiempo real:** Visualización instantánea de cada comprobante que se va procesando con su número de serie, emisor, animación de carga (`spinner`) y badges de estado (`Descargado` / `Error`).
+  - **Lista scrolleable en tiempo real:** Visualización instantánea de cada comprobante con número de serie, emisor, animación de carga (`spinner`) y badges de estado (`Descargado` / `Error`).
+  - **Poda de Memoria DOM (DOM Pruning):** Retiene un máximo de 100 elementos en pantalla durante descargas de cientos de comprobantes para evitar sobrecargar la memoria de la pestaña.
+  - **Atajo de Doble Clic:** Doble clic en la barra de cabecera para minimizar o expandir el widget rápidamente.
+- **Extractor de Modales PrimeFaces:** Inspecciona diálogos emergentes (`.ui-dialog`) para extraer la clave de acceso de 49 dígitos en vistas donde la tabla la oculta, cerrando el modal automáticamente sin trabar la interfaz.
 - **Compatibilidad Dual de Formularios (Recibidos y Emitidos):** Soporta tanto los dropdowns de Comprobantes Recibidos como los inputs de calendario de texto `DD/MM/YYYY` (`calendarFechaDesde_input` y `calendarFechaHasta_input`) de Comprobantes Emitidos, automatizando ambas vistas con el mismo panel.
 - **Consulta Continua por Rango de Fechas (Desde / Hasta):** Selector interactivo de rango de fechas en el panel flotante que automatiza la búsqueda secuencial día por día o meses completos, sorteando el error de "excedió el número máximo de registros" del SRI mediante ejecución desatendida.
 - **Paginación Automática:** Recorre automáticamente todas las páginas de resultados de RichFaces / PrimeFaces (`.ui-paginator` / `.rich-datascr`).

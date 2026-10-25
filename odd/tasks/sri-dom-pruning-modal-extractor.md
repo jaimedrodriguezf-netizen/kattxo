@@ -10,8 +10,8 @@ Refinamientos avanzados para Kattxo SRI: optimización de memoria DOM (poda de l
 
 ## Tasks
 - [x] T1 (S1, S2): Doble clic en cabecera y poda de lista a 100 elementos en inPageWidget.ts con tests unitarios. (1456ae8)
-- [/] T2 (S3): Funciones extractClaveFromModalDialog y closeSriModalDialog en parser.ts con tests unitarios. (inline)
-- T3 (S4): Verificación integral, tests de la suite completa y build de producción en dist/. (inline)
+- [x] T2 (S3): Funciones extractClaveFromModalDialog y closeSriModalDialog en parser.ts con tests unitarios. (c45a7c7)
+- [x] T3 (S4): Verificación integral, tests de la suite completa y build de producción en dist/. (1456ae8, c45a7c7)
 
 ## Log
 - L1: Usuario confirma: "si dale" tras la segunda auditoría forense con REA.
