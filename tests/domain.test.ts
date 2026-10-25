@@ -6,6 +6,8 @@ import {
   getSriDocumentTypeName,
   extractDatePartsFromClaveAcceso,
   buildSriDownloadPath,
+  parseCurrencyAmount,
+  verifyVoucherAmountMatch,
 } from '../src/domain/validators';
 import { RetentionVoucher, SriVoucher, DEFAULT_QUEUE_CONFIG } from '../src/domain/types';
 
@@ -159,6 +161,46 @@ describe('Domain Validators & Helpers', () => {
       expect(DEFAULT_QUEUE_CONFIG.concurrency).toBe(1);
       expect(DEFAULT_QUEUE_CONFIG.delayBetweenRequestsMs).toBeGreaterThanOrEqual(250);
       expect(DEFAULT_QUEUE_CONFIG.maxRetries).toBe(3);
+    });
+  });
+
+  describe('parseCurrencyAmount', () => {
+    it('parses numeric values and strings with $ symbols and spaces', () => {
+      expect(parseCurrencyAmount('$ 125.50')).toBe(125.5);
+      expect(parseCurrencyAmount('1,250.00')).toBe(1250);
+      expect(parseCurrencyAmount('150.75')).toBe(150.75);
+      expect(parseCurrencyAmount(45.99)).toBe(45.99);
+    });
+
+    it('handles commas as decimal separator (e.g. 125,50)', () => {
+      expect(parseCurrencyAmount('125,50')).toBe(125.5);
+    });
+
+    it('returns 0 for invalid or empty amounts safely', () => {
+      expect(parseCurrencyAmount('')).toBe(0);
+      expect(parseCurrencyAmount(null)).toBe(0);
+      expect(parseCurrencyAmount('invalid')).toBe(0);
+    });
+  });
+
+  describe('verifyVoucherAmountMatch (Cuadre Contable)', () => {
+    it('confirms match when amounts are identical', () => {
+      expect(verifyVoucherAmountMatch(150.25, 150.25)).toBe(true);
+      expect(verifyVoucherAmountMatch('$ 150.25', '150.25')).toBe(true);
+    });
+
+    it('confirms match within tolerance threshold (<= 0.005)', () => {
+      expect(verifyVoucherAmountMatch(100.002, 100.004)).toBe(true);
+    });
+
+    it('rejects mismatch when difference exceeds 0.005 (desincronización detectada)', () => {
+      expect(verifyVoucherAmountMatch(100.0, 105.0)).toBe(false);
+      expect(verifyVoucherAmountMatch('$ 10.50', '$ 10.60')).toBe(false);
+    });
+
+    it('returns true if one amount is missing (0) so it does not block unpriced receipts', () => {
+      expect(verifyVoucherAmountMatch(0, 150.25)).toBe(true);
+      expect(verifyVoucherAmountMatch(150.25, 0)).toBe(true);
     });
   });
 });

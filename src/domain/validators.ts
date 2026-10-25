@@ -93,3 +93,50 @@ export function buildXmlFilename(voucher: RetentionVoucher, subdirectory = 'Katt
   return sub ? `${sub}/retencion_${cleanKey}.xml` : `retencion_${cleanKey}.xml`;
 }
 
+/**
+ * Parsea un importe monetario expresado en formato ecuatoriano o estándar ($ 1,234.56 o 1234,56).
+ */
+export function parseCurrencyAmount(val: string | number | null | undefined): number {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') {
+    return isNaN(val) ? 0 : val;
+  }
+
+  const str = val.trim();
+  if (!str) return 0;
+
+  // Remover $, USD, espacios
+  let clean = str.replace(/[$USD\s]/gi, '');
+  if (!clean) return 0;
+
+  // Si tiene coma y punto (ej: 1,250.50): la coma es separador de miles
+  if (clean.includes(',') && clean.includes('.')) {
+    clean = clean.replace(/,/g, '');
+  } else if (clean.includes(',') && !clean.includes('.')) {
+    // Si solo tiene coma (ej: 125,50), reemplazar coma por punto
+    clean = clean.replace(',', '.');
+  }
+
+  const num = parseFloat(clean);
+  return isNaN(num) ? 0 : num;
+}
+
+/**
+ * Valida si dos importes coinciden dentro de un umbral de tolerancia contable (por defecto 0.005 centavos).
+ * Si alguno de los dos importes no está presente (es 0), retorna true para no bloquear comprobantes sin importe reportado en tabla.
+ */
+export function verifyVoucherAmountMatch(
+  tableAmount: number | string,
+  detailAmount: number | string,
+  tolerance = 0.005
+): boolean {
+  const numA = parseCurrencyAmount(tableAmount);
+  const numB = parseCurrencyAmount(detailAmount);
+
+  if (numA === 0 || numB === 0) {
+    return true;
+  }
+
+  return Math.abs(numA - numB) <= tolerance;
+}
+
