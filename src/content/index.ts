@@ -35,10 +35,34 @@ class SriContentScript {
   public init(): void {
     console.log('[Kattxo SRI] Content script inicializado en:', window.location.href);
     this.initWidget();
+    this.checkAutoResumeState();
     this.scanAndNotify();
     this.setupMutationObserver();
     this.setupPolling();
     this.setupMessageListener();
+  }
+
+  private async checkAutoResumeState(): Promise<void> {
+    try {
+      const historyManager = new HistoryManager();
+      const autoResume = await historyManager.getAutoResumeState();
+      if (autoResume && autoResume.pendingVouchers && autoResume.pendingVouchers.length > 0) {
+        console.log(`[Kattxo SRI] Lote previo pendiente detectado: ${autoResume.pendingVouchers.length} comprobantes.`);
+        this.widget?.showResumeBanner(
+          autoResume.pendingVouchers.length,
+          () => {
+            console.log('[Kattxo SRI] Reanudando lote desde banner...');
+            this.widget?.hideResumeBanner();
+            this.startBulkDownload(autoResume.pendingVouchers);
+          },
+          () => {
+            historyManager.clearAutoResumeState();
+          }
+        );
+      }
+    } catch (err) {
+      console.warn('[Kattxo SRI] Error verificando auto-reanudación:', err);
+    }
   }
 
   private initWidget(): void {
@@ -186,6 +210,7 @@ class SriContentScript {
 
     let completed = 0;
     let failed = 0;
+    let consecutiveFailures = 0;
 
     console.log(`[Kattxo SRI] Iniciando descarga de ${this.downloadVouchersList.length} retenciones vía JSF...`);
 
@@ -196,8 +221,19 @@ class SriContentScript {
       const success = this.triggerDownloadForVoucher(voucher, this.currentDownloadIndex);
       if (success) {
         completed++;
+        consecutiveFailures = 0;
       } else {
         failed++;
+        consecutiveFailures++;
+        if (consecutiveFailures >= 3) {
+          console.warn(
+            '[Kattxo SRI] ⚠️ Circuit breaker activado: 3 fallos consecutivos detectados (posible caída de sesión del SRI).'
+          );
+          this.isDownloading = false;
+          this.isPaused = true;
+          await this.handleCircuitBreakerTriggered(completed, failed);
+          return;
+        }
       }
 
       this.currentDownloadIndex++;
@@ -245,6 +281,59 @@ class SriContentScript {
       }
     } catch (err) {
       console.warn('[Kattxo SRI] Error guardando registro en historial:', err);
+    }
+  }
+
+  private async handleCircuitBreakerTriggered(completed: number, failed: number): Promise<void> {
+    const remaining = this.downloadVouchersList.slice(this.currentDownloadIndex + 1);
+    const historyManager = new HistoryManager();
+    const sessionId = `session-${Date.now()}`;
+
+    try {
+      await historyManager.saveSessionRecord({
+        id: sessionId,
+        timestamp: Date.now(),
+        taxpayerRuc: this.currentTaxpayerProfile?.ruc || 'SRI',
+        taxpayerName: this.currentTaxpayerProfile?.razonSocial,
+        documentType: 'ALL',
+        totalVouchers: this.downloadVouchersList.length,
+        completedVouchers: completed,
+        failedVouchers: failed,
+        status: 'interrupted',
+        pendingVouchers: remaining,
+      });
+
+      if (remaining.length > 0) {
+        await historyManager.saveAutoResumeState({
+          id: sessionId,
+          timestamp: Date.now(),
+          taxpayerRuc: this.currentTaxpayerProfile?.ruc || 'SRI',
+          pendingVouchers: remaining,
+          totalOriginal: this.downloadVouchersList.length,
+          completedSoFar: completed,
+        });
+
+        this.widget?.showResumeBanner(remaining.length, () => {
+          this.widget?.hideResumeBanner();
+          this.startBulkDownload(remaining);
+        });
+      }
+
+      this.widget?.setStatusText('⚠️ Sesión interrumpida por fallos. Reanudá al reingresar.');
+      this.broadcastProgress(this.downloadVouchersList.length, completed, failed, undefined, false);
+
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({
+          type: 'BATCH_COMPLETED_NOTIFICATION',
+          payload: {
+            total: this.downloadVouchersList.length,
+            completed,
+            failed,
+          },
+        });
+      }
+    } catch (err) {
+      console.warn('[Kattxo SRI] Error procesando circuit breaker:', err);
     }
   }
 
