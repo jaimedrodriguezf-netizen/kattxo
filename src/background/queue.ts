@@ -8,6 +8,7 @@ import {
   DEFAULT_QUEUE_CONFIG,
 } from '../domain/types';
 import { buildSriDownloadPath } from '../domain/validators';
+import { buildSyntheticSriXml } from '../domain/syntheticXmlGenerator';
 import { fetchRetentionXml, xmlToDataUrl } from './downloader';
 
 export type ProcessItemFn = (item: DownloadItem, config: QueueConfig) => Promise<void | boolean>;
@@ -171,27 +172,30 @@ export class DownloadQueueManager {
   }
 
   private async defaultProcessItem(item: DownloadItem): Promise<void> {
-    const format = item.format || 'xml';
+    const format = (item.format || 'xml').toLowerCase() as 'xml' | 'pdf';
     const filename = buildSriDownloadPath(item.voucher, {
       taxpayerRuc: item.voucher.rucEmisor,
       format,
       baseDirectory: this.config.downloadSubdirectory || 'Kattxo',
     });
 
-    let dataUrl = '';
-    if (format === 'xml') {
-      const { xmlContent } = await fetchRetentionXml(item.voucher.claveAcceso);
-      dataUrl = xmlToDataUrl(xmlContent);
+    let downloadUrl = '';
+    if (item.voucher.categoria === 'emitidos' && format === 'xml') {
+      const xmlContent = buildSyntheticSriXml(item.voucher);
+      downloadUrl = xmlToDataUrl(xmlContent);
     } else {
-      // PDF RIDE dataUrl placeholder / fetch
-      dataUrl = `data:application/pdf;base64,`;
+      const tipo = item.voucher.tipoComprobante || '01';
+      downloadUrl =
+        format === 'pdf'
+          ? `https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/descargaRide?claveAcceso=${item.voucher.claveAcceso}&tipo=${tipo}`
+          : `https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/descargaXml?claveAcceso=${item.voucher.claveAcceso}&tipo=${tipo}`;
     }
 
     if (typeof chrome !== 'undefined' && chrome.downloads?.download) {
       await new Promise<number>((resolve, reject) => {
         chrome.downloads.download(
           {
-            url: dataUrl,
+            url: downloadUrl,
             filename,
             conflictAction: 'overwrite',
             saveAs: false,

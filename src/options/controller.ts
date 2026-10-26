@@ -229,6 +229,51 @@ export class OptionsController {
       }
     });
 
+    const progressContainer = document.getElementById('import-progress-container');
+    const progressBar = document.getElementById('import-progress-bar');
+    const progressRatio = document.getElementById('import-progress-ratio');
+    const progressStatus = document.getElementById('import-progress-status');
+    const openFolderBtn = document.getElementById('import-btn-open-folder');
+
+    openFolderBtn?.addEventListener('click', () => {
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'OPEN_DOWNLOADS_FOLDER' });
+      }
+    });
+
+    if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
+      chrome.runtime.onMessage.addListener((msg) => {
+        if (msg.type === 'QUEUE_STATE_CHANGED' && msg.payload?.stats) {
+          const stats = msg.payload.stats;
+          const total = stats.total || 0;
+          const completed = stats.completed || 0;
+          const failed = stats.failed || 0;
+          const processed = completed + failed;
+          const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
+
+          if (progressContainer) progressContainer.style.display = 'block';
+          if (progressBar) progressBar.style.width = `${pct}%`;
+          if (progressRatio) progressRatio.textContent = `${processed} / ${total}`;
+
+          if (progressStatus) {
+            if (stats.isRunning) {
+              const currentKey = msg.payload.currentActiveKey;
+              progressStatus.textContent = currentKey
+                ? `Descargando: ${currentKey}...`
+                : 'Procesando descarga en segundo plano...';
+            } else if (stats.pending === 0 && total > 0) {
+              progressStatus.textContent = `✓ Descarga finalizada: ${completed} completados, ${failed} fallidos.`;
+              if (openFolderBtn) openFolderBtn.style.display = 'inline-block';
+              if (startBtn) {
+                (startBtn as HTMLButtonElement).disabled = false;
+                startBtn.textContent = '⚡ Iniciar Descarga Desatendida';
+              }
+            }
+          }
+        }
+      });
+    }
+
     startBtn?.addEventListener('click', async () => {
       if (this.parsedImportVouchers.length === 0) {
         alert('No hay comprobantes cargados para descargar.');
@@ -236,6 +281,16 @@ export class OptionsController {
       }
       const formatSelect = document.getElementById('import-format-select') as HTMLSelectElement | null;
       const format = (formatSelect?.value || 'xml').toUpperCase() as 'XML' | 'PDF';
+
+      if (progressContainer) progressContainer.style.display = 'block';
+      if (progressBar) progressBar.style.width = '0%';
+      if (progressRatio) progressRatio.textContent = `0 / ${this.parsedImportVouchers.length}`;
+      if (progressStatus) progressStatus.textContent = 'Iniciando descarga en segundo plano...';
+      if (openFolderBtn) openFolderBtn.style.display = 'none';
+      if (startBtn) {
+        (startBtn as HTMLButtonElement).disabled = true;
+        startBtn.textContent = '⏳ Descargando...';
+      }
 
       if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
         chrome.runtime.sendMessage({
@@ -245,9 +300,12 @@ export class OptionsController {
             format,
           },
         });
-        alert(`Iniciada descarga de ${this.parsedImportVouchers.length} comprobantes en formato ${format}.`);
       } else {
         alert(`Descarga simulada para ${this.parsedImportVouchers.length} comprobantes (${format}).`);
+        if (startBtn) {
+          (startBtn as HTMLButtonElement).disabled = false;
+          startBtn.textContent = '⚡ Iniciar Descarga Desatendida';
+        }
       }
     });
 
