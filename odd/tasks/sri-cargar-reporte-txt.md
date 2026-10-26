@@ -11,10 +11,10 @@ Módulo para importar archivos TXT de reportes oficiales emitidos por el SRI en 
 - S6: Suite exhaustiva de pruebas unitarias con Vitest para validar diferentes variaciones del formato TXT del SRI (con/sin BOM, variaciones de columnas, líneas vacías, valores monetarios con coma o punto).
 
 ## Tasks
-- [ ] T1 (S1, S2): Implementar sriTxtParser.ts con parseSriTxtReport() y pruebas unitarias en tests/sriTxtParser.test.ts. (inline)
-- [ ] T2 (S3): Agregar control visual de carga de archivo TXT y estado en InPageWidget con tests. (inline)
-- [ ] T3 (S4, S5): Conectar el flujo de importación de TXT con startBulkDownload en content/index.ts y en options. (inline)
-- [ ] T4 (S6): Verificación de suite completa de pruebas unitarias y generación de build limpio en dist/. (inline)
+- [x] T1 (S1, S2): Implementar sriTxtParser.ts con parseSriTxtReport() y pruebas unitarias en tests/sriTxtParser.test.ts. (0c38e15)
+- [x] T2 (S3): Agregar control visual de carga de archivo TXT y estado en InPageWidget con tests. (4c00242)
+- [x] T3 (S4, S5): Conectar el flujo de importación de TXT con startBulkDownload en content/index.ts y en options. (4c00242)
+- [x] T4 (S6): Verificación de suite completa de pruebas unitarias y generación de build limpio en dist/. (0c38e15, 4c00242)
 
 ## Log
 - L1: Usuario solicita: "vamos con todos uno por uno" tras auditoría técnica de funciones de TribuExcel (Modo Cargar Reporte TXT del SRI, Conciliación, Nomenclatura Configurable, Excel XLSX).
