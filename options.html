@@ -320,12 +320,13 @@
         <div id="import-preview-container" style="display: none; margin-top: 24px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 id="import-summary-title" style="font-size: 15px; font-weight: 700;">Comprobantes Detectados</h3>
-            <div style="display: flex; gap: 8px; align-items: center;">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
               <select id="import-format-select" class="form-input" style="width: auto; padding: 6px 10px;">
                 <option value="xml">Descargar XML</option>
                 <option value="pdf">Descargar RIDE (PDF)</option>
               </select>
               <button id="btn-start-import-download" class="btn btn-primary">⚡ Iniciar Descarga Desatendida</button>
+              <button id="btn-export-reconciliation-csv" class="btn btn-outline" style="border: 1px solid var(--border); background: white;">📊 Exportar Conciliación CSV</button>
             </div>
           </div>
           <table class="history-table">

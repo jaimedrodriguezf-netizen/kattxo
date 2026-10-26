@@ -84,6 +84,10 @@ class SriContentScript {
       onExportCsv: () => this.exportDetectedToCsv(),
       onDownloadTxtReport: () => this.downloadSriTxtReport(),
       onImportTxtContent: (content, filename) => this.handleImportedTxt(content, filename),
+      onRetryMissing: (missing) => {
+        console.log(`[Kattxo SRI] Reintentando ${missing.length} comprobantes faltantes de conciliación...`);
+        this.startBulkDownload(missing);
+      },
       onStartBatchRange: (params) => {
         if (params.format === 'TXT') {
           this.downloadSriTxtReport();
@@ -291,6 +295,7 @@ class SriContentScript {
     console.log(`[Kattxo SRI] Descarga finalizada: ${completed} completados, ${failed} fallidos.`);
 
     if (isFinished && completed > 0) {
+      const completedList = this.downloadVouchersList.slice(0, completed);
       this.widget?.showSuccessScreen(
         {
           total: this.downloadVouchersList.length,
@@ -299,7 +304,8 @@ class SriContentScript {
         },
         () => {
           this.widget?.clearDownloadList();
-        }
+        },
+        completedList
       );
     }
 

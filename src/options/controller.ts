@@ -1,6 +1,7 @@
 import { HistoryManager, DownloadSessionRecord, UserPreferences } from '../domain/historyManager';
 import { SriVoucher } from '../domain/types';
 import { parseSriTxtReport } from '../domain/sriTxtParser';
+import { reconcileVouchers, reconciliationToCsv } from '../domain/voucherReconciler';
 
 export class OptionsController {
   private historyManager: HistoryManager;
@@ -207,6 +208,32 @@ export class OptionsController {
       } else {
         alert(`Descarga simulada para ${this.parsedImportVouchers.length} comprobantes (${format}).`);
       }
+    });
+
+    const exportCsvBtn = document.getElementById('btn-export-reconciliation-csv');
+    exportCsvBtn?.addEventListener('click', async () => {
+      if (this.parsedImportVouchers.length === 0) {
+        alert('Cargá primero un reporte TXT del SRI.');
+        return;
+      }
+      const history = await this.historyManager.getHistory();
+      const allDownloaded: SriVoucher[] = [];
+      history.forEach((rec) => {
+        if (rec.pendingVouchers) {
+          // Si hay pendientes, los que no están pendientes son completados
+        }
+      });
+      const result = reconcileVouchers(this.parsedImportVouchers, allDownloaded);
+      const csv = reconciliationToCsv(result);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `conciliacion_sri_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
   }
 

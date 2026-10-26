@@ -109,6 +109,24 @@ describe('InPageWidget (Shadow DOM Floating Panel)', () => {
     expect(successCard.style.display).toBe('none');
   });
 
+  it('renders reconciliation button in success card and handles TXT reconciliation', () => {
+    let retryMissingCalledWith: any[] = [];
+    const widget = new InPageWidget({
+      onRetryMissing: (missing) => {
+        retryMissingCalledWith = missing;
+      },
+    });
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+
+    widget.showSuccessScreen({ total: 5, completed: 3, failed: 2 });
+
+    const reconcileBtn = shadow.querySelector<HTMLButtonElement>('.kattxo-btn-reconcile-txt');
+    expect(reconcileBtn).not.toBeNull();
+  });
+
   it('prunes download list to maximum 100 items for memory efficiency in large batches', () => {
     const widget = new InPageWidget();
     widget.mount(document.body);

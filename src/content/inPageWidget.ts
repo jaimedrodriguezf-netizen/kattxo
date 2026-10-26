@@ -1,6 +1,8 @@
 import { TaxpayerProfile, SriVoucher } from '../domain/types';
 import { getDefaultDateRange } from '../domain/dateRangeIterator';
 import { getSriDocumentTypeName } from '../domain/validators';
+import { parseSriTxtReport } from '../domain/sriTxtParser';
+import { reconcileVouchers } from '../domain/voucherReconciler';
 
 export interface InPageProgressData {
   total: number;
@@ -18,6 +20,7 @@ export interface InPageWidgetOptions {
   onExportCsv?: () => void;
   onDownloadTxtReport?: () => void;
   onImportTxtContent?: (content: string, filename: string) => void;
+  onRetryMissing?: (missing: SriVoucher[]) => void;
   onStartBatchRange?: (params: { from: string; to: string; documentType: string; format?: 'XML' | 'PDF' | 'TXT' }) => void;
 }
 
@@ -33,6 +36,7 @@ export class InPageWidget {
   private resumeCallback?: () => void;
   private dismissCallback?: () => void;
   private newDownloadCallback?: () => void;
+  private lastCompletedVouchers: SriVoucher[] = [];
 
   constructor(options: InPageWidgetOptions = {}) {
     this.options = options;
@@ -606,6 +610,12 @@ export class InPageWidget {
               <button type="button" class="kattxo-action-btn kattxo-btn-open-folder">📁 Abrir carpeta</button>
               <button type="button" class="kattxo-action-btn kattxo-btn-new-download" style="background: #0c4597; color: white; border: none;">🔄 Nueva descarga</button>
             </div>
+            <div class="kattxo-btn-row" style="margin-top: 6px; width: 100%;">
+              <button type="button" class="kattxo-action-btn kattxo-btn-reconcile-txt" style="background: #4f46e5; color: white; border: none; width: 100%;">🔍 Conciliar con TXT</button>
+              <input type="file" class="kattxo-reconcile-file-input" accept=".txt" style="display: none;" />
+            </div>
+            <div class="kattxo-reconcile-result-box" style="display: none; margin-top: 8px; font-size: 11px; text-align: left; background: #eef2ff; border-radius: 6px; padding: 8px; border: 1px solid #c7d2fe; width: 100%;">
+            </div>
           </div>
 
           <button type="button" class="kattxo-start-btn">
@@ -787,6 +797,48 @@ export class InPageWidget {
         this.newDownloadCallback();
       }
     });
+
+    const reconcileBtn = this.shadow.querySelector('.kattxo-btn-reconcile-txt');
+    const reconcileFileInput = this.shadow.querySelector<HTMLInputElement>('.kattxo-reconcile-file-input');
+    const resultBox = this.shadow.querySelector<HTMLElement>('.kattxo-reconcile-result-box');
+
+    reconcileBtn?.addEventListener('click', () => {
+      reconcileFileInput?.click();
+    });
+
+    reconcileFileInput?.addEventListener('change', () => {
+      const file = reconcileFileInput.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target?.result as string;
+          if (content && resultBox) {
+            const expected = parseSriTxtReport(content);
+            const res = reconcileVouchers(expected, this.lastCompletedVouchers);
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = `
+              <strong>Resultado de Conciliación:</strong><br>
+              • Esperados en TXT: ${res.summary.totalExpected}<br>
+              • Coincidentes: ${res.summary.totalMatched} (${res.summary.completionRatePercent.toFixed(1)}%)<br>
+              • Faltantes: <strong>${res.summary.totalMissing}</strong><br>
+              ${
+                res.summary.totalMissing > 0
+                  ? `<button type="button" class="kattxo-btn-retry-missing" style="margin-top: 6px; width: 100%; background: #e11d48; color: white; border: none; border-radius: 4px; padding: 6px; font-weight: 600; cursor: pointer;">⚡ Reintentar ${res.summary.totalMissing} Faltantes</button>`
+                  : '<span style="color: #166534; font-weight: 600;">✓ 100% de los comprobantes coinciden</span>'
+              }
+            `;
+            const retryBtn = resultBox.querySelector('.kattxo-btn-retry-missing');
+            retryBtn?.addEventListener('click', () => {
+              if (this.options.onRetryMissing) {
+                this.options.onRetryMissing(res.missing);
+              }
+            });
+          }
+          reconcileFileInput.value = '';
+        };
+        reader.readAsText(file);
+      }
+    });
   }
 
   public toggleMinimize(): void {
@@ -811,10 +863,14 @@ export class InPageWidget {
 
   public showSuccessScreen(
     stats: { total: number; completed: number; failed: number },
-    onNewDownload?: () => void
+    onNewDownload?: () => void,
+    completedVouchers?: SriVoucher[]
   ): void {
     if (!this.shadow) return;
     this.newDownloadCallback = onNewDownload;
+    if (completedVouchers) {
+      this.lastCompletedVouchers = completedVouchers;
+    }
 
     const successCard = this.shadow.querySelector<HTMLElement>('.kattxo-success-card');
     const summaryEl = this.shadow.querySelector('.kattxo-success-summary');
