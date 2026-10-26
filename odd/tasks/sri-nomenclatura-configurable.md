@@ -10,10 +10,10 @@ Permite al usuario definir patrones personalizados de nombres de archivo para lo
 - S5: Suite de pruebas unitarias automatizadas con Vitest cubriendo todos los tokens, sanitización de caracteres especiales y compatibilidad con carpetas.
 
 ## Tasks
-- [ ] T1 (S1, S2): Implementar formateador de nombres y persistencia en UserPreferences con tests unitarios. (inline)
-- [ ] T2 (S3): Integrar plantilla en resolveDynamicDownloadPath y background router con tests. (inline)
-- [ ] T3 (S4): Agregar campo de plantilla, presets y vista previa en options.html y OptionsController con tests. (inline)
-- [ ] T4 (S5): Verificación completa de suite de tests y build de producción en dist/. (inline)
+- [x] T1 (S1, S2): Implementar formateador de nombres y persistencia en UserPreferences con tests unitarios. (4c26d0d)
+- [x] T2 (S3): Integrar plantilla en resolveDynamicDownloadPath y background router con tests. (4c26d0d)
+- [x] T3 (S4): Agregar campo de plantilla, presets y vista previa en options.html y OptionsController con tests. (4c26d0d)
+- [x] T4 (S5): Verificación completa de suite de tests y build de producción en dist/. (4c26d0d)
 
 ## Log
 - L1: Usuario solicita: "vamos con todos uno por uno" tras auditoría técnica de funciones de TribuExcel (Modo Cargar Reporte TXT del SRI, Conciliación, Nomenclatura Configurable, Excel XLSX).
