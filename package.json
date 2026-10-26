@@ -1,6 +1,6 @@
 {
   "name": "kattxo-sri-extension",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Chrome extension para descarga masiva de comprobantes electrónicos (XML & RIDE) del SRI (Ecuador)",
   "type": "module",
   "scripts": {

@@ -4,7 +4,11 @@ import {
   extractTaxpayerProfileFromDom,
 } from './parser';
 import { InPageWidget } from './inPageWidget';
-import { triggerSriTxtReportDownload } from './formAutomator';
+import {
+  triggerSriTxtReportDownload,
+  getPaginatorState,
+  goToNextPage,
+} from './formAutomator';
 import { BatchQueryRunner } from './batchQueryRunner';
 import { vouchersToCsv } from '../domain/csvExporter';
 import { exportVouchersToExcelXml } from '../domain/excelSpreadsheetGenerator';
@@ -216,6 +220,16 @@ class SriContentScript {
     const category = isEmitidos ? 'emitidos' : 'recibidos';
     const vouchers = parseSriTxtReport(content, category);
 
+    // Extraer RUC del contribuyente a partir del nombre de archivo (ej. 1793170714001_Recibidos.txt)
+    const rucMatch = filename.match(/^(\d{13})_/);
+    if (rucMatch) {
+      this.currentTaxpayerProfile = {
+        ruc: rucMatch[1],
+        razonSocial: this.currentTaxpayerProfile?.razonSocial || 'CONTRIBUYENTE',
+      };
+      this.widget?.setTaxpayerProfile(this.currentTaxpayerProfile);
+    }
+
     if (vouchers.length === 0) {
       console.warn('[Kattxo SRI] No se detectaron comprobantes válidos en el archivo TXT:', filename);
       this.widget?.setStatusText('⚠️ No se detectaron claves de acceso válidas en el TXT.');
@@ -283,7 +297,22 @@ class SriContentScript {
       this.broadcastProgress(this.downloadVouchersList.length, completed, failed, voucher.claveAcceso, false);
 
       this.widget?.addDownloadItem(voucher, 'downloading');
-      const success = this.triggerDownloadForVoucher(voucher, this.currentDownloadIndex, format);
+      let success = this.triggerDownloadForVoucher(voucher, this.currentDownloadIndex, format);
+
+      // Si no se encontró el botón en la página actual, verificar si la tabla tiene siguiente página
+      if (!success) {
+        const paginator = getPaginatorState(document);
+        if (paginator.hasNextPage) {
+          console.log(`[Kattxo SRI] Comprobante no visible en página actual. Avanzando a página ${paginator.currentPage + 1}...`);
+          this.widget?.setStatusText(`Avanzando a página ${paginator.currentPage + 1} de ${paginator.totalPages}...`);
+          goToNextPage(document);
+          // Esperar 2200ms a que PrimeFaces / Mojarra actualice la tabla por AJAX
+          await new Promise((resolve) => setTimeout(resolve, 2200));
+          // Reintentar en la nueva página visible
+          success = this.triggerDownloadForVoucher(voucher, this.currentDownloadIndex, format);
+        }
+      }
+
       if (success) {
         completed++;
         consecutiveFailures = 0;
@@ -300,6 +329,23 @@ class SriContentScript {
           this.isPaused = true;
           await this.handleCircuitBreakerTriggered(completed, failed);
           return;
+        }
+      }
+
+      // Si terminamos los comprobantes de la página actual y hay más páginas disponibles en la tabla
+      if (
+        this.currentDownloadIndex === this.downloadVouchersList.length - 1 &&
+        getPaginatorState(document).hasNextPage
+      ) {
+        const paginator = getPaginatorState(document);
+        this.widget?.setStatusText(`Cargando página ${paginator.currentPage + 1} de ${paginator.totalPages}...`);
+        goToNextPage(document);
+        await new Promise((resolve) => setTimeout(resolve, 2200));
+        const nextPageVouchers = this.scan();
+        for (const v of nextPageVouchers) {
+          if (!this.downloadVouchersList.some((existing) => existing.claveAcceso === v.claveAcceso)) {
+            this.downloadVouchersList.push(v);
+          }
         }
       }
 
@@ -425,31 +471,31 @@ class SriContentScript {
     format: 'XML' | 'PDF' = 'XML'
   ): boolean {
     try {
-      if (format === 'PDF') {
-        if (voucher.elementPdfId) {
-          const el = document.getElementById(voucher.elementPdfId);
-          if (el) {
-            el.click();
+      // 1. Buscar directamente en la fila de la tabla que contiene la clave de acceso del comprobante
+      const tableRows = document.querySelectorAll('table tbody tr, table tr');
+      for (const row of Array.from(tableRows)) {
+        if (row.textContent && row.textContent.includes(voucher.claveAcceso)) {
+          const selector =
+            format === 'PDF'
+              ? 'a[id*="lnkPdf"], a[id*="lnkRide"], a[title*="ride" i], a[title*="pdf" i]'
+              : 'a[id*="lnkXml"], button[id*="lnkXml"], a[title*="xml" i]';
+          const btn = row.querySelector<HTMLElement>(selector);
+          if (btn) {
+            console.log(`[Kattxo SRI] Click en botón por coincidencia de fila (${voucher.claveAcceso})`);
+            btn.click();
             return true;
           }
         }
-        const indexedPdfId = `frmPrincipal:tablaCompRecibidos:${index}:lnkPdf`;
-        const indexedPdfEl = document.getElementById(indexedPdfId);
-        if (indexedPdfEl) {
-          indexedPdfEl.click();
-          return true;
-        }
-        const allPdfLinks = document.querySelectorAll<HTMLElement>(
-          'a[id*="lnkPdf"], a[id*="lnkRide"], a[title*="ride" i], a[title*="pdf" i]'
-        );
-        if (allPdfLinks[index]) {
-          allPdfLinks[index].click();
-          return true;
-        }
       }
 
-      // 1. Intentar por elementId guardado
-      if (voucher.elementId) {
+      // 2. Intentar por elementId guardado
+      if (format === 'PDF' && voucher.elementPdfId) {
+        const el = document.getElementById(voucher.elementPdfId);
+        if (el) {
+          el.click();
+          return true;
+        }
+      } else if (format === 'XML' && voucher.elementId) {
         const el = document.getElementById(voucher.elementId);
         if (el) {
           console.log(`[Kattxo SRI] Click en elemento por ID: ${voucher.elementId}`);
@@ -458,20 +504,16 @@ class SriContentScript {
         }
       }
 
-      // 2. Intentar buscar enlace por índice estándar de tabla Mojarra
-      const indexedId = `frmPrincipal:tablaCompRecibidos:${index}:lnkXml`;
+      // 3. Intentar por índice local en la tabla visible (index % 50)
+      const localIndex = index % 50;
+      const indexedId =
+        format === 'PDF'
+          ? `frmPrincipal:tablaCompRecibidos:${localIndex}:lnkPdf`
+          : `frmPrincipal:tablaCompRecibidos:${localIndex}:lnkXml`;
       const indexedEl = document.getElementById(indexedId);
       if (indexedEl) {
-        console.log(`[Kattxo SRI] Click en elemento por índice: ${indexedId}`);
+        console.log(`[Kattxo SRI] Click en elemento por índice local: ${indexedId}`);
         indexedEl.click();
-        return true;
-      }
-
-      // 3. Fallback: buscar cualquier enlace lnkXml de la lista por posición
-      const allXmlLinks = document.querySelectorAll<HTMLElement>('a[id*="lnkXml"], button[id*="lnkXml"]');
-      if (allXmlLinks[index]) {
-        console.log(`[Kattxo SRI] Click en elemento por querySelectorAll index: ${index}`);
-        allXmlLinks[index].click();
         return true;
       }
 
@@ -485,21 +527,7 @@ class SriContentScript {
         return true;
       }
 
-      // 5. Fallback para comprobantes sin elemento DOM interactivo (ej. importados de TXT)
-      const downloadUrl =
-        format === 'PDF'
-          ? `https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/descargaRide?claveAcceso=${voucher.claveAcceso}&tipo=${voucher.tipoComprobante}`
-          : `https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/descargaXml?claveAcceso=${voucher.claveAcceso}&tipo=${voucher.tipoComprobante}`;
-
-      console.log(`[Kattxo SRI] Descargando comprobante directo desde endpoint SRI: ${voucher.claveAcceso}`);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      const ext = format === 'PDF' ? 'pdf' : 'xml';
-      link.download = `${voucher.tipoComprobante}_${voucher.claveAcceso}.${ext}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      return true;
+      return false;
     } catch (err) {
       console.error(`[Kattxo SRI] Error al ejecutar click de descarga para ${voucher.claveAcceso}:`, err);
       return false;
