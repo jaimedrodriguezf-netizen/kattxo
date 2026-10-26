@@ -2,6 +2,7 @@ import { HistoryManager, DownloadSessionRecord, UserPreferences } from '../domai
 import { SriVoucher } from '../domain/types';
 import { parseSriTxtReport } from '../domain/sriTxtParser';
 import { reconcileVouchers, reconciliationToCsv } from '../domain/voucherReconciler';
+import { formatCustomFilename } from '../domain/filenameFormatter';
 
 export class OptionsController {
   private historyManager: HistoryManager;
@@ -44,14 +45,52 @@ export class OptionsController {
     const subdirInput = document.getElementById('setting-subdir') as HTMLInputElement | null;
     const throttleInput = document.getElementById('setting-throttle') as HTMLInputElement | null;
     const pdfCheckbox = document.getElementById('setting-download-pdf') as HTMLInputElement | null;
+    const patternInput = document.getElementById('setting-filename-pattern') as HTMLInputElement | null;
 
     if (subdirInput) subdirInput.value = prefs.downloadSubdirectory;
     if (throttleInput) throttleInput.value = prefs.throttlingDelayMs.toString();
     if (pdfCheckbox) pdfCheckbox.checked = prefs.downloadPdfRide;
+    if (patternInput) {
+      patternInput.value = prefs.filenamePattern || '{tipo}_{clave}';
+      this.updatePatternPreview(patternInput.value);
+    }
+  }
+
+  public updatePatternPreview(pattern: string): void {
+    const previewEl = document.getElementById('pattern-preview-text');
+    if (!previewEl) return;
+    const sampleFilename = formatCustomFilename(pattern, {
+      tipo: 'factura',
+      tipoCode: '01',
+      clave: '0101202401019000000000120010010000000011234567813',
+      ruc: '0190000000001',
+      numero: '001-001-000000001',
+      secuencial: '000000001',
+      fecha: '2024-01-01',
+      razonSocial: 'COMERCIAL ANDINA S.A.',
+    });
+    previewEl.textContent = `${sampleFilename}.xml`;
   }
 
   public setupSettingsForm(): void {
     const form = document.getElementById('settings-form');
+    const patternInput = document.getElementById('setting-filename-pattern') as HTMLInputElement | null;
+    const presetButtons = document.querySelectorAll<HTMLButtonElement>('.btn-pattern-preset');
+
+    patternInput?.addEventListener('input', () => {
+      this.updatePatternPreview(patternInput.value);
+    });
+
+    presetButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const preset = btn.getAttribute('data-preset');
+        if (preset && patternInput) {
+          patternInput.value = preset;
+          this.updatePatternPreview(preset);
+        }
+      });
+    });
+
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const subdirInput = document.getElementById('setting-subdir') as HTMLInputElement | null;
@@ -62,6 +101,7 @@ export class OptionsController {
         downloadSubdirectory: subdirInput?.value.trim() || 'Kattxo',
         throttlingDelayMs: parseInt(throttleInput?.value || '1200', 10),
         downloadPdfRide: !!pdfCheckbox?.checked,
+        filenamePattern: patternInput?.value.trim() || '{tipo}_{clave}',
       };
 
       await this.historyManager.savePreferences(newPrefs);

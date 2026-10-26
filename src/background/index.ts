@@ -3,11 +3,20 @@ import { setupDownloadRouter } from './downloadRouter';
 import { notifyBatchCompleted } from './notifications';
 import { ExtensionMessage, MessageResponse, QueueStateChangedMessage } from '../domain/messages';
 import { RetentionVoucher } from '../domain/types';
+import { HistoryManager } from '../domain/historyManager';
 
 console.log('[Kattxo SRI] Background service worker iniciado.');
 
-// Inicializar interceptor de nombres de archivo y auto-aprobación de descargas
-setupDownloadRouter();
+// Inicializar interceptor de nombres de archivo con preferencias del usuario
+const historyManager = new HistoryManager();
+historyManager.getPreferences().then((prefs) => {
+  setupDownloadRouter({
+    baseDirectory: prefs.downloadSubdirectory,
+    filenamePattern: prefs.filenamePattern,
+  });
+}).catch(() => {
+  setupDownloadRouter();
+});
 
 const queueManager = new DownloadQueueManager();
 let lastDetectedRetenciones: RetentionVoucher[] = [];

@@ -54,4 +54,18 @@ describe('Dynamic Download Router (onDeterminingFilename)', () => {
     const path = resolveDynamicDownloadPath(item, 'Kattxo');
     expect(path).toBeNull();
   });
+
+  it('applies custom filename pattern when specified (e.g. {ruc}_{numero})', () => {
+    const item = {
+      id: 5,
+      url: 'https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/descargar?id=123',
+      finalUrl: 'https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/descargar?id=123',
+      filename: `${validKey}.xml`,
+    } as unknown as chrome.downloads.DownloadItem;
+
+    const path = resolveDynamicDownloadPath(item, 'Kattxo', '{ruc}_{numero}');
+    expect(path).toBe(
+      'Kattxo/Recibidos/0190000000001/2024/01/Retencion/0190000000001_001-001-000000001.xml'
+    );
+  });
 });

@@ -1,4 +1,5 @@
 import { getSriDocumentTypeName } from '../domain/validators';
+import { formatCustomFilename } from '../domain/filenameFormatter';
 
 /**
  * Resuelve la ruta jerárquica para un archivo descargado desde el SRI en Línea.
@@ -6,7 +7,8 @@ import { getSriDocumentTypeName } from '../domain/validators';
  */
 export function resolveDynamicDownloadPath(
   downloadItem: chrome.downloads.DownloadItem,
-  baseDirectory = 'Kattxo'
+  baseDirectory = 'Kattxo',
+  filenamePattern?: string
 ): string | null {
   const url = downloadItem.url || '';
   const finalUrl = downloadItem.finalUrl || '';
@@ -31,13 +33,28 @@ export function resolveDynamicDownloadPath(
     const year = key.substring(4, 8);
     const typeCode = key.substring(8, 10);
     const ruc = key.substring(10, 23);
+    const estab = key.substring(24, 27);
+    const ptoEmi = key.substring(27, 30);
+    const secuencial = key.substring(30, 39);
+    const numero = `${estab}-${ptoEmi}-${secuencial}`;
+    const fecha = `${year}-${month}-${day}`;
     const typeName = getSriDocumentTypeName(typeCode);
     const ext = downloadItem.filename.toLowerCase().endsWith('.pdf') ? 'pdf' : 'xml';
     const cleanBase = baseDirectory.replace(/^\/+|\/+$/g, '');
     const isEmitidos = url.includes('/emitidos/') || finalUrl.includes('/emitidos/');
     const categoryDir = isEmitidos ? 'Emitidos' : 'Recibidos';
 
-    return `${cleanBase}/${categoryDir}/${ruc}/${year}/${month}/${typeName}/${typeName.toLowerCase()}_${key}.${ext}`;
+    const customFilename = formatCustomFilename(filenamePattern, {
+      tipo: typeName.toLowerCase(),
+      tipoCode: typeCode,
+      clave: key,
+      ruc,
+      numero,
+      secuencial,
+      fecha,
+    });
+
+    return `${cleanBase}/${categoryDir}/${ruc}/${year}/${month}/${typeName}/${customFilename}.${ext}`;
   }
 
   // 2. Detección de reporte TXT oficial del SRI
@@ -60,14 +77,20 @@ export function resolveDynamicDownloadPath(
  * 1. onDeterminingFilename: organiza archivos en carpetas jerárquicas.
  * 2. onChanged: aprueba automáticamente advertencias de múltiples descargas para el SRI.
  */
-export function setupDownloadRouter(options: { baseDirectory?: string } = {}): void {
+export function setupDownloadRouter(
+  options: { baseDirectory?: string; filenamePattern?: string } = {}
+): void {
   if (typeof chrome === 'undefined' || !chrome.downloads) return;
 
   // 1. Interceptar nombres de archivo para descargas del SRI
   if (chrome.downloads.onDeterminingFilename) {
     chrome.downloads.onDeterminingFilename.addListener((item, suggest) => {
       try {
-        const customPath = resolveDynamicDownloadPath(item, options.baseDirectory || 'Kattxo');
+        const customPath = resolveDynamicDownloadPath(
+          item,
+          options.baseDirectory || 'Kattxo',
+          options.filenamePattern
+        );
         if (customPath) {
           suggest({
             filename: customPath,

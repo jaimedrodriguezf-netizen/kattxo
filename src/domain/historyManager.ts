@@ -20,6 +20,7 @@ export interface UserPreferences {
   downloadSubdirectory: string;
   throttlingDelayMs: number;
   downloadPdfRide: boolean;
+  filenamePattern?: string;
 }
 
 export interface AutoResumeState {
@@ -35,6 +36,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   downloadSubdirectory: 'Kattxo',
   throttlingDelayMs: 1200,
   downloadPdfRide: false,
+  filenamePattern: '{tipo}_{clave}',
 };
 
 export interface StorageAreaLike {

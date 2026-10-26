@@ -138,4 +138,31 @@ describe('OptionsController', () => {
     expect(tbody.innerHTML).toContain('EMPRESA DEMO');
     expect(controller.getParsedImportVouchers()).toHaveLength(1);
   });
+
+  it('loads and saves custom filename pattern in settings', async () => {
+    document.getElementById('settings-form')!.innerHTML += `
+      <input id="setting-filename-pattern" value="{tipo}_{clave}" />
+      <span id="pattern-preview-text"></span>
+      <button type="button" class="btn-pattern-preset" data-preset="{ruc}_{numero}">preset</button>
+    `;
+
+    (mockHistoryManager.getPreferences as any).mockResolvedValue({
+      downloadSubdirectory: 'Kattxo',
+      throttlingDelayMs: 1200,
+      downloadPdfRide: false,
+      filenamePattern: '{ruc}_{numero}',
+    });
+
+    const controller = new OptionsController(mockHistoryManager);
+    controller.setupSettingsForm();
+    await controller.loadPreferences();
+
+    const patternInput = document.getElementById('setting-filename-pattern') as HTMLInputElement;
+    expect(patternInput.value).toBe('{ruc}_{numero}');
+
+    // Preset button click
+    const presetBtn = document.querySelector<HTMLButtonElement>('.btn-pattern-preset')!;
+    presetBtn.click();
+    expect(patternInput.value).toBe('{ruc}_{numero}');
+  });
 });
