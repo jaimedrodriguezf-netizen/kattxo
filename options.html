@@ -318,14 +318,15 @@
         </div>
 
         <div id="import-preview-container" style="display: none; margin-top: 24px;">
+          <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px;">
+            <p style="font-size: 13px; color: #0369a1; font-weight: 500;">
+              ℹ️ <strong>Nota contable:</strong> Para descargar masivamente los XML y PDF de este listado, usá el botón <code>📥 Cargar TXT SRI</code> directamente desde el panel flotante de Kattxo en la página del SRI. Desde esta pantalla podés exportar a Excel y conciliar.
+            </p>
+          </div>
+
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 id="import-summary-title" style="font-size: 15px; font-weight: 700;">Comprobantes Detectados</h3>
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-              <select id="import-format-select" class="form-input" style="width: auto; padding: 6px 10px;">
-                <option value="xml">Descargar XML</option>
-                <option value="pdf">Descargar RIDE (PDF)</option>
-              </select>
-              <button id="btn-start-import-download" class="btn btn-primary">⚡ Iniciar Descarga Desatendida</button>
               <button id="btn-export-excel" class="btn btn-outline" style="border: 1px solid var(--border); background: white;">📗 Exportar Excel (.xls)</button>
               <button id="btn-export-reconciliation-csv" class="btn btn-outline" style="border: 1px solid var(--border); background: white;">📊 Exportar Conciliación CSV</button>
             </div>
@@ -345,20 +346,6 @@
               <!-- Render dinámico -->
             </tbody>
           </table>
-
-          <div id="import-progress-container" style="display: none; margin-top: 16px; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span id="import-progress-label" style="font-weight: 600; font-size: 13px;">Descargando comprobantes...</span>
-              <span id="import-progress-ratio" style="font-weight: 700; color: var(--primary);">0 / 0</span>
-            </div>
-            <div style="background: #e2e8f0; border-radius: 9999px; height: 10px; width: 100%; overflow: hidden;">
-              <div id="import-progress-bar" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; flex-wrap: wrap; gap: 8px;">
-              <span id="import-progress-status" style="font-size: 12px; color: var(--muted);">Iniciando cola de descarga...</span>
-              <button id="import-btn-open-folder" class="btn btn-outline btn-sm" style="display: none;">📁 Abrir carpeta de descargas</button>
-            </div>
-          </div>
         </div>
       </div>
     </section>

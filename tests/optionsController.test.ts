@@ -114,8 +114,8 @@ describe('OptionsController', () => {
           <table>
             <tbody id="import-preview-tbody"></tbody>
           </table>
-          <select id="import-format-select"><option value="xml">XML</option></select>
-          <button id="btn-start-import-download"></button>
+          <button id="btn-export-excel"></button>
+          <button id="btn-export-reconciliation-csv"></button>
         </div>
       </section>
     `;
