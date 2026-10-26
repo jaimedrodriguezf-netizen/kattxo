@@ -14,10 +14,10 @@ Generador de libros de Excel estructurados en formato SpreadsheetML con múltipl
 - S5: Suite de pruebas unitarias automatizadas con Vitest que valida la estructura XML del libro, formato de celdas, suma de importes y partición en hojas.
 
 ## Tasks
-- [ ] T1 (S1, S2, S3): Implementar excelSpreadsheetGenerator.ts y suite de pruebas en tests/excelSpreadsheetGenerator.test.ts. (inline)
-- [ ] T2 (S4): Integrar botón y acción de exportación a Excel en InPageWidget y content/index.ts con tests. (inline)
-- [ ] T3 (S4): Integrar acción de exportación a Excel en options.html y OptionsController con tests. (inline)
-- [ ] T4 (S5): Verificación completa de suite de tests y build de producción limpio en dist/. (inline)
+- [x] T1 (S1, S2, S3): Implementar excelSpreadsheetGenerator.ts y suite de pruebas en tests/excelSpreadsheetGenerator.test.ts. (6a3d9e4)
+- [x] T2 (S4): Integrar botón y acción de exportación a Excel en InPageWidget y content/index.ts con tests. (6a3d9e4)
+- [x] T3 (S4): Integrar acción de exportación a Excel en options.html y OptionsController con tests. (6a3d9e4)
+- [x] T4 (S5): Verificación completa de suite de tests y build de producción limpio en dist/. (6a3d9e4)
 
 ## Log
 - L1: Usuario solicita: "vamos con todos uno por uno" tras auditoría técnica de funciones de TribuExcel (Modo Cargar Reporte TXT del SRI, Conciliación, Nomenclatura Configurable, Excel XLSX).
