@@ -18,6 +18,7 @@ export interface InPageWidgetOptions {
   onPauseDownload?: () => void;
   onResumeDownload?: () => void;
   onExportCsv?: () => void;
+  onExportExcel?: () => void;
   onDownloadTxtReport?: () => void;
   onImportTxtContent?: (content: string, filename: string) => void;
   onRetryMissing?: (missing: SriVoucher[]) => void;
@@ -629,11 +630,12 @@ export class InPageWidget {
 
           <div class="kattxo-btn-row">
             <button type="button" class="kattxo-action-btn kattxo-export-csv-btn" title="Exportar comprobantes detectados a CSV para Excel">📊 Exportar CSV</button>
-            <button type="button" class="kattxo-action-btn kattxo-txt-report-btn" title="Descargar reporte TXT generado por el SRI">📄 Reporte TXT SRI</button>
+            <button type="button" class="kattxo-action-btn kattxo-export-excel-btn" title="Exportar comprobantes a libro Excel (.xls) multi-hoja">📗 Exportar Excel</button>
           </div>
 
           <div class="kattxo-btn-row">
-            <button type="button" class="kattxo-action-btn kattxo-import-txt-btn" style="background: #0284c7; color: #ffffff; border: none; font-weight: 600;" title="Cargar reporte TXT del SRI para descarga desatendida">📥 Cargar TXT del SRI</button>
+            <button type="button" class="kattxo-action-btn kattxo-txt-report-btn" title="Descargar reporte TXT generado por el SRI">📄 Reporte TXT SRI</button>
+            <button type="button" class="kattxo-action-btn kattxo-import-txt-btn" style="background: #0284c7; color: #ffffff; border: none; font-weight: 600;" title="Cargar reporte TXT del SRI para descarga desatendida">📥 Cargar TXT SRI</button>
             <input type="file" class="kattxo-txt-file-input" accept=".txt" style="display: none;" />
           </div>
         </div>
@@ -708,6 +710,13 @@ export class InPageWidget {
     exportCsvBtn?.addEventListener('click', () => {
       if (this.options.onExportCsv) {
         this.options.onExportCsv();
+      }
+    });
+
+    const exportExcelBtn = this.shadow.querySelector('.kattxo-export-excel-btn');
+    exportExcelBtn?.addEventListener('click', () => {
+      if (this.options.onExportExcel) {
+        this.options.onExportExcel();
       }
     });
 

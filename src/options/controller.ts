@@ -3,6 +3,7 @@ import { SriVoucher } from '../domain/types';
 import { parseSriTxtReport } from '../domain/sriTxtParser';
 import { reconcileVouchers, reconciliationToCsv } from '../domain/voucherReconciler';
 import { formatCustomFilename } from '../domain/filenameFormatter';
+import { exportVouchersToExcelXml } from '../domain/excelSpreadsheetGenerator';
 
 export class OptionsController {
   private historyManager: HistoryManager;
@@ -248,6 +249,24 @@ export class OptionsController {
       } else {
         alert(`Descarga simulada para ${this.parsedImportVouchers.length} comprobantes (${format}).`);
       }
+    });
+
+    const exportExcelBtn = document.getElementById('btn-export-excel');
+    exportExcelBtn?.addEventListener('click', () => {
+      if (this.parsedImportVouchers.length === 0) {
+        alert('Cargá primero un reporte TXT del SRI.');
+        return;
+      }
+      const excelXml = exportVouchersToExcelXml(this.parsedImportVouchers);
+      const blob = new Blob([excelXml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte_comprobantes_sri_${Date.now()}.xls`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
 
     const exportCsvBtn = document.getElementById('btn-export-reconciliation-csv');

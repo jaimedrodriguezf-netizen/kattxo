@@ -233,6 +233,24 @@ describe('InPageWidget (Shadow DOM Floating Panel)', () => {
     expect(shadow.querySelectorAll('.kattxo-download-list li').length).toBe(0);
   });
 
+  it('triggers onExportExcel callback on Excel button click', () => {
+    let excelClicked = false;
+    const widget = new InPageWidget({
+      onExportExcel: () => {
+        excelClicked = true;
+      },
+    });
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const excelBtn = shadow.querySelector<HTMLButtonElement>('.kattxo-export-excel-btn');
+    expect(excelBtn).not.toBeNull();
+
+    excelBtn?.click();
+    expect(excelClicked).toBe(true);
+  });
+
   it('updates progress metrics and bar width', () => {
     const widget = new InPageWidget();
     widget.mount(document.body);

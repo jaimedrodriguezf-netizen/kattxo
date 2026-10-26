@@ -7,6 +7,7 @@ import { InPageWidget } from './inPageWidget';
 import { triggerSriTxtReportDownload } from './formAutomator';
 import { BatchQueryRunner } from './batchQueryRunner';
 import { vouchersToCsv } from '../domain/csvExporter';
+import { exportVouchersToExcelXml } from '../domain/excelSpreadsheetGenerator';
 import { generateDateRangeSteps } from '../domain/dateRangeIterator';
 import { HistoryManager } from '../domain/historyManager';
 import { buildSyntheticSriXml } from '../domain/syntheticXmlGenerator';
@@ -82,6 +83,7 @@ class SriContentScript {
       onPauseDownload: () => this.pauseBulkDownload(),
       onResumeDownload: () => this.resumeBulkDownload(),
       onExportCsv: () => this.exportDetectedToCsv(),
+      onExportExcel: () => this.exportDetectedToExcel(),
       onDownloadTxtReport: () => this.downloadSriTxtReport(),
       onImportTxtContent: (content, filename) => this.handleImportedTxt(content, filename),
       onRetryMissing: (missing) => {
@@ -180,6 +182,27 @@ class SriContentScript {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     console.log(`[Kattxo SRI] Reporte CSV exportado exitosamente (${vouchers.length} registros).`);
+  }
+
+  public exportDetectedToExcel(): void {
+    const vouchers = this.scan();
+    if (vouchers.length === 0) {
+      console.warn('[Kattxo SRI] No hay comprobantes detectados para exportar a Excel.');
+      return;
+    }
+
+    const excelContent = exportVouchersToExcelXml(vouchers, this.currentTaxpayerProfile || undefined);
+    const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const ruc = this.currentTaxpayerProfile?.ruc || 'SRI';
+    link.download = `reporte_comprobantes_${ruc}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    console.log(`[Kattxo SRI] Reporte Excel (.xls) exportado exitosamente (${vouchers.length} registros).`);
   }
 
   public downloadSriTxtReport(): void {
