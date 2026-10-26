@@ -264,6 +264,7 @@
   <div class="main-container">
     <nav class="nav-tabs">
       <button type="button" class="tab-btn active" data-tab="tab-history">📑 Historial de Descargas</button>
+      <button type="button" class="tab-btn" data-tab="tab-import">📥 Cargar Reporte TXT</button>
       <button type="button" class="tab-btn" data-tab="tab-settings">⚙️ Configuración</button>
     </nav>
 
@@ -295,6 +296,53 @@
             <span>📭</span>
             <p>Aún no hay descargas registradas en el historial.</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab Cargar Reporte TXT -->
+    <section id="tab-import" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Importar Comprobantes desde Reporte TXT del SRI</h2>
+        </div>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+          Cargá el archivo de texto (.txt) generado por el SRI en Comprobantes Recibidos o Emitidos para descargar masivamente los XML y PDF sin tener que navegar por la web del SRI.
+        </p>
+
+        <div id="txt-drop-zone" style="border: 2px dashed var(--border); border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s ease; background: #f8fafc;">
+          <span style="font-size: 32px;">📄</span>
+          <p style="font-weight: 600; margin-top: 8px;">Arrastrá tu archivo TXT del SRI acá o hacé clic para seleccionar</p>
+          <p style="font-size: 12px; color: var(--muted); margin-top: 4px;">Soporta reportes oficiales delimitados por tabulador o punto y coma</p>
+          <input type="file" id="input-txt-file" accept=".txt" style="display: none;" />
+        </div>
+
+        <div id="import-preview-container" style="display: none; margin-top: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h3 id="import-summary-title" style="font-size: 15px; font-weight: 700;">Comprobantes Detectados</h3>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <select id="import-format-select" class="form-input" style="width: auto; padding: 6px 10px;">
+                <option value="xml">Descargar XML</option>
+                <option value="pdf">Descargar RIDE (PDF)</option>
+              </select>
+              <button id="btn-start-import-download" class="btn btn-primary">⚡ Iniciar Descarga Desatendida</button>
+            </div>
+          </div>
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>RUC Emisor</th>
+                <th>Razón Social</th>
+                <th>Comprobante</th>
+                <th>Total</th>
+                <th>Clave de Acceso</th>
+              </tr>
+            </thead>
+            <tbody id="import-preview-tbody">
+              <!-- Render dinámico -->
+            </tbody>
+          </table>
         </div>
       </div>
     </section>

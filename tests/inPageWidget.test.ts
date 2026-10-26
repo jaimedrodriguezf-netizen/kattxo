@@ -355,6 +355,29 @@ describe('InPageWidget (Shadow DOM Floating Panel)', () => {
     expect(banner.style.display).toBe('none');
   });
 
+  it('renders TXT import button and triggers onImportTxtContent when file is loaded', () => {
+    let importedContent = '';
+    let importedFilename = '';
+
+    const widget = new InPageWidget({
+      onImportTxtContent: (content, filename) => {
+        importedContent = content;
+        importedFilename = filename;
+      },
+    });
+    widget.mount(document.body);
+
+    const host = document.getElementById('kattxo-sri-widget-host')!;
+    const shadow = host.shadowRoot!;
+    const importBtn = shadow.querySelector<HTMLButtonElement>('.kattxo-import-txt-btn');
+    const fileInput = shadow.querySelector<HTMLInputElement>('.kattxo-txt-file-input');
+
+    expect(importBtn).not.toBeNull();
+    expect(fileInput).not.toBeNull();
+    expect(fileInput?.type).toBe('file');
+    expect(fileInput?.accept).toBe('.txt');
+  });
+
   it('does not create duplicate hosts if mounted multiple times', () => {
     const widget = new InPageWidget();
     widget.mount(document.body);

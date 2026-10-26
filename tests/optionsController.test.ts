@@ -102,4 +102,40 @@ describe('OptionsController', () => {
     const empty = document.getElementById('history-empty')!;
     expect(empty.style.display).toBe('block');
   });
+
+  it('sets up import tab and parses dropped TXT report into preview table', () => {
+    document.body.innerHTML += `
+      <section id="tab-import" class="tab-content">
+        <div id="txt-drop-zone">
+          <input type="file" id="input-txt-file" />
+        </div>
+        <div id="import-preview-container" style="display: none;">
+          <h3 id="import-summary-title"></h3>
+          <table>
+            <tbody id="import-preview-tbody"></tbody>
+          </table>
+          <select id="import-format-select"><option value="xml">XML</option></select>
+          <button id="btn-start-import-download"></button>
+        </div>
+      </section>
+    `;
+
+    const controller = new OptionsController(mockHistoryManager);
+    controller.setupImportTab();
+
+    const sampleKey = '1405202401019000000000120010010000001231234567818';
+    const sampleTxt = `0190000000001\tEMPRESA DEMO\tFactura\t001-001-000000123\t${sampleKey}\t14/05/2024\t100.00\tAUTORIZADO`;
+
+    controller.handleTxtContent(sampleTxt, 'reporte_sri.txt');
+
+    const previewContainer = document.getElementById('import-preview-container')!;
+    const title = document.getElementById('import-summary-title')!;
+    const tbody = document.getElementById('import-preview-tbody')!;
+
+    expect(previewContainer.style.display).not.toBe('none');
+    expect(title.textContent).toContain('1 comprobante');
+    expect(tbody.innerHTML).toContain(sampleKey);
+    expect(tbody.innerHTML).toContain('EMPRESA DEMO');
+    expect(controller.getParsedImportVouchers()).toHaveLength(1);
+  });
 });

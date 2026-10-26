@@ -1,7 +1,10 @@
 import { HistoryManager, DownloadSessionRecord, UserPreferences } from '../domain/historyManager';
+import { SriVoucher } from '../domain/types';
+import { parseSriTxtReport } from '../domain/sriTxtParser';
 
 export class OptionsController {
   private historyManager: HistoryManager;
+  private parsedImportVouchers: SriVoucher[] = [];
 
   constructor(historyManager: HistoryManager = new HistoryManager()) {
     this.historyManager = historyManager;
@@ -11,6 +14,7 @@ export class OptionsController {
     this.setupTabs();
     this.setupSettingsForm();
     this.setupHistoryActions();
+    this.setupImportTab();
     await this.loadPreferences();
     await this.renderHistory();
   }
@@ -134,5 +138,118 @@ export class OptionsController {
         }
       );
     }
+  }
+
+  public setupImportTab(): void {
+    const dropZone = document.getElementById('txt-drop-zone');
+    const fileInput = document.getElementById('input-txt-file') as HTMLInputElement | null;
+    const startBtn = document.getElementById('btn-start-import-download');
+
+    dropZone?.addEventListener('click', () => {
+      fileInput?.click();
+    });
+
+    fileInput?.addEventListener('change', () => {
+      const file = fileInput.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target?.result as string;
+          if (content) {
+            this.handleTxtContent(content, file.name);
+          }
+          fileInput.value = '';
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    dropZone?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--primary)';
+    });
+    dropZone?.addEventListener('dragleave', () => {
+      dropZone.style.borderColor = 'var(--border)';
+    });
+    dropZone?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--border)';
+      const file = e.dataTransfer?.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const content = evt.target?.result as string;
+          if (content) {
+            this.handleTxtContent(content, file.name);
+          }
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    startBtn?.addEventListener('click', async () => {
+      if (this.parsedImportVouchers.length === 0) {
+        alert('No hay comprobantes cargados para descargar.');
+        return;
+      }
+      const formatSelect = document.getElementById('import-format-select') as HTMLSelectElement | null;
+      const format = (formatSelect?.value || 'xml').toUpperCase() as 'XML' | 'PDF';
+
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({
+          type: 'ENQUEUE_VOUCHERS',
+          payload: {
+            vouchers: this.parsedImportVouchers,
+            format,
+          },
+        });
+        alert(`Iniciada descarga de ${this.parsedImportVouchers.length} comprobantes en formato ${format}.`);
+      } else {
+        alert(`Descarga simulada para ${this.parsedImportVouchers.length} comprobantes (${format}).`);
+      }
+    });
+  }
+
+  public handleTxtContent(rawContent: string, filename: string): void {
+    const isEmitidos = filename.toLowerCase().includes('emitido');
+    const category = isEmitidos ? 'emitidos' : 'recibidos';
+    this.parsedImportVouchers = parseSriTxtReport(rawContent, category);
+
+    const previewContainer = document.getElementById('import-preview-container');
+    const summaryTitle = document.getElementById('import-summary-title');
+    const tbody = document.getElementById('import-preview-tbody');
+
+    if (!previewContainer || !tbody) return;
+
+    if (this.parsedImportVouchers.length === 0) {
+      alert('No se encontraron claves de acceso de 49 dígitos válidas en el archivo TXT cargado.');
+      previewContainer.style.display = 'none';
+      return;
+    }
+
+    previewContainer.style.display = 'block';
+    if (summaryTitle) {
+      summaryTitle.textContent = `Comprobantes Detectados: ${this.parsedImportVouchers.length} comprobante(s) en ${filename}`;
+    }
+
+    tbody.innerHTML = '';
+    const previewItems = this.parsedImportVouchers.slice(0, 100);
+    previewItems.forEach((v) => {
+      const tr = document.createElement('tr');
+      const totalStr = v.totalImporte !== undefined ? `$ ${v.totalImporte.toFixed(2)}` : '-';
+      tr.innerHTML = `
+        <td>${v.fechaEmision}</td>
+        <td><code>${v.rucEmisor}</code></td>
+        <td>${v.razonSocialEmisor || '-'}</td>
+        <td><strong>${v.numeroComprobante}</strong></td>
+        <td>${totalStr}</td>
+        <td><small><code>${v.claveAcceso}</code></small></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  public getParsedImportVouchers(): SriVoucher[] {
+    return this.parsedImportVouchers;
   }
 }

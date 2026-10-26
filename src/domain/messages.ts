@@ -1,4 +1,4 @@
-import { RetentionVoucher, QueueState } from './types';
+import { RetentionVoucher, SriVoucher, QueueState } from './types';
 
 export type ExtensionMessageType =
   | 'RETENTIONS_DETECTED'
@@ -15,7 +15,8 @@ export type ExtensionMessageType =
   | 'DOWNLOAD_PROGRESS_UPDATE'
   | 'DOWNLOAD_SRI_TXT_REQUEST'
   | 'BATCH_COMPLETED_NOTIFICATION'
-  | 'OPEN_DOWNLOADS_FOLDER';
+  | 'OPEN_DOWNLOADS_FOLDER'
+  | 'ENQUEUE_VOUCHERS';
 
 export interface BaseMessage {
   type: ExtensionMessageType;
@@ -106,6 +107,14 @@ export interface OpenDownloadsFolderMessage extends BaseMessage {
   type: 'OPEN_DOWNLOADS_FOLDER';
 }
 
+export interface EnqueueVouchersMessage extends BaseMessage {
+  type: 'ENQUEUE_VOUCHERS';
+  payload: {
+    vouchers: SriVoucher[];
+    format?: 'XML' | 'PDF';
+  };
+}
+
 export type ExtensionMessage =
   | RetentionsDetectedMessage
   | StartDownloadQueueMessage
@@ -121,7 +130,8 @@ export type ExtensionMessage =
   | DownloadProgressUpdateMessage
   | DownloadSriTxtRequestMessage
   | BatchCompletedNotificationMessage
-  | OpenDownloadsFolderMessage;
+  | OpenDownloadsFolderMessage
+  | EnqueueVouchersMessage;
 
 export interface MessageResponse<T = unknown> {
   success: boolean;

@@ -118,6 +118,21 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
           break;
         }
 
+        case 'ENQUEUE_VOUCHERS': {
+          const vouchers = message.payload?.vouchers || [];
+          const format = (message.payload?.format || 'XML').toLowerCase() as 'xml' | 'pdf';
+          if (vouchers.length > 0) {
+            queueManager.enqueue(vouchers, { format });
+            queueManager.start().catch((err) => {
+              console.error('[Kattxo SRI] Error ejecutando la cola:', err);
+            });
+            sendResponse({ success: true, data: queueManager.getState() });
+          } else {
+            sendResponse({ success: false, error: 'No se recibieron comprobantes para encolar.' });
+          }
+          break;
+        }
+
         default:
           break;
       }

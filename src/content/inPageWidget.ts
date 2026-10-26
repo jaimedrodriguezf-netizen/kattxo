@@ -17,6 +17,7 @@ export interface InPageWidgetOptions {
   onResumeDownload?: () => void;
   onExportCsv?: () => void;
   onDownloadTxtReport?: () => void;
+  onImportTxtContent?: (content: string, filename: string) => void;
   onStartBatchRange?: (params: { from: string; to: string; documentType: string; format?: 'XML' | 'PDF' | 'TXT' }) => void;
 }
 
@@ -620,6 +621,11 @@ export class InPageWidget {
             <button type="button" class="kattxo-action-btn kattxo-export-csv-btn" title="Exportar comprobantes detectados a CSV para Excel">📊 Exportar CSV</button>
             <button type="button" class="kattxo-action-btn kattxo-txt-report-btn" title="Descargar reporte TXT generado por el SRI">📄 Reporte TXT SRI</button>
           </div>
+
+          <div class="kattxo-btn-row">
+            <button type="button" class="kattxo-action-btn kattxo-import-txt-btn" style="background: #0284c7; color: #ffffff; border: none; font-weight: 600;" title="Cargar reporte TXT del SRI para descarga desatendida">📥 Cargar TXT del SRI</button>
+            <input type="file" class="kattxo-txt-file-input" accept=".txt" style="display: none;" />
+          </div>
         </div>
       </div>
     `;
@@ -699,6 +705,51 @@ export class InPageWidget {
     txtReportBtn?.addEventListener('click', () => {
       if (this.options.onDownloadTxtReport) {
         this.options.onDownloadTxtReport();
+      }
+    });
+
+    const importTxtBtn = this.shadow.querySelector('.kattxo-import-txt-btn');
+    const txtFileInput = this.shadow.querySelector<HTMLInputElement>('.kattxo-txt-file-input');
+    importTxtBtn?.addEventListener('click', () => {
+      txtFileInput?.click();
+    });
+
+    txtFileInput?.addEventListener('change', () => {
+      const file = txtFileInput.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target?.result as string;
+          if (content && this.options.onImportTxtContent) {
+            this.options.onImportTxtContent(content, file.name);
+          }
+          txtFileInput.value = '';
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    const containerEl = this.shadow.querySelector<HTMLElement>('.kattxo-widget-container');
+    containerEl?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      containerEl.style.borderColor = '#0284c7';
+    });
+    containerEl?.addEventListener('dragleave', () => {
+      containerEl.style.borderColor = '#747687';
+    });
+    containerEl?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      containerEl.style.borderColor = '#747687';
+      const file = e.dataTransfer?.files?.[0];
+      if (file && (file.name.endsWith('.txt') || file.type.includes('text'))) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const content = evt.target?.result as string;
+          if (content && this.options.onImportTxtContent) {
+            this.options.onImportTxtContent(content, file.name);
+          }
+        };
+        reader.readAsText(file);
       }
     });
 

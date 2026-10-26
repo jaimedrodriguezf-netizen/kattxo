@@ -10,6 +10,7 @@ import { vouchersToCsv } from '../domain/csvExporter';
 import { generateDateRangeSteps } from '../domain/dateRangeIterator';
 import { HistoryManager } from '../domain/historyManager';
 import { buildSyntheticSriXml } from '../domain/syntheticXmlGenerator';
+import { parseSriTxtReport } from '../domain/sriTxtParser';
 import { buildSriDownloadPath } from '../domain/validators';
 import {
   ExtensionMessage,
@@ -82,6 +83,7 @@ class SriContentScript {
       onResumeDownload: () => this.resumeBulkDownload(),
       onExportCsv: () => this.exportDetectedToCsv(),
       onDownloadTxtReport: () => this.downloadSriTxtReport(),
+      onImportTxtContent: (content, filename) => this.handleImportedTxt(content, filename),
       onStartBatchRange: (params) => {
         if (params.format === 'TXT') {
           this.downloadSriTxtReport();
@@ -178,6 +180,24 @@ class SriContentScript {
 
   public downloadSriTxtReport(): void {
     triggerSriTxtReportDownload(document);
+  }
+
+  public handleImportedTxt(content: string, filename: string): void {
+    const isEmitidos =
+      filename.toLowerCase().includes('emitido') ||
+      (typeof window !== 'undefined' && window.location.href.includes('/emitidos/'));
+    const category = isEmitidos ? 'emitidos' : 'recibidos';
+    const vouchers = parseSriTxtReport(content, category);
+
+    if (vouchers.length === 0) {
+      console.warn('[Kattxo SRI] No se detectaron comprobantes válidos en el archivo TXT:', filename);
+      this.widget?.setStatusText('⚠️ No se detectaron claves de acceso válidas en el TXT.');
+      return;
+    }
+
+    console.log(`[Kattxo SRI] TXT cargado: ${vouchers.length} comprobantes detectados desde ${filename}`);
+    this.widget?.setStatusText(`📄 TXT cargado: ${vouchers.length} comprobantes`);
+    this.startBulkDownload(vouchers);
   }
 
   public async startBatchRangeDownload(params: { from: string; to: string; documentType: string }): Promise<void> {
@@ -436,8 +456,21 @@ class SriContentScript {
         return true;
       }
 
-      console.warn(`[Kattxo SRI] No se encontró el botón de descarga XML para el comprobante en índice ${index}`);
-      return false;
+      // 5. Fallback para comprobantes sin elemento DOM interactivo (ej. importados de TXT)
+      const downloadUrl =
+        format === 'PDF'
+          ? `https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/descargaRide?claveAcceso=${voucher.claveAcceso}&tipo=${voucher.tipoComprobante}`
+          : `https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/descargaXml?claveAcceso=${voucher.claveAcceso}&tipo=${voucher.tipoComprobante}`;
+
+      console.log(`[Kattxo SRI] Descargando comprobante directo desde endpoint SRI: ${voucher.claveAcceso}`);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      const ext = format === 'PDF' ? 'pdf' : 'xml';
+      link.download = `${voucher.tipoComprobante}_${voucher.claveAcceso}.${ext}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return true;
     } catch (err) {
       console.error(`[Kattxo SRI] Error al ejecutar click de descarga para ${voucher.claveAcceso}:`, err);
       return false;
