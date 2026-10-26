@@ -11,10 +11,10 @@ Motor y vistas para conciliar los comprobantes descargados en disco contra el re
 - S6: Cobertura de pruebas unitarias automatizadas con Vitest para validar todos los casos límites (lotes 100% coincidentes, 100% faltantes, importes con diferencias de centavos, claves duplicadas).
 
 ## Tasks
-- [ ] T1 (S1, S2, S3): Implementar voucherReconciler.ts y pruebas unitarias exhaustivas en tests/voucherReconciler.test.ts. (inline)
-- [ ] T2 (S4): Implementar función de exportación a CSV de la conciliación con tests unitarios. (inline)
-- [ ] T3 (S5): Integrar acción de conciliación y botón de reintento de faltantes en InPageWidget y Options. (inline)
-- [ ] T4 (S6): Verificación completa de suite de pruebas unitarias y generación de build limpio en dist/. (inline)
+- [x] T1 (S1, S2, S3): Implementar voucherReconciler.ts y pruebas unitarias exhaustivas en tests/voucherReconciler.test.ts. (3335562)
+- [x] T2 (S4): Implementar función de exportación a CSV de la conciliación con tests unitarios. (3335562)
+- [x] T3 (S5): Integrar acción de conciliación y botón de reintento de faltantes en InPageWidget y Options. (14fc024)
+- [x] T4 (S6): Verificación completa de suite de pruebas unitarias y generación de build limpio en dist/. (3335562, 14fc024)
 
 ## Log
 - L1: Usuario solicita: "vamos con todos uno por uno" tras auditoría técnica de funciones de TribuExcel (Modo Cargar Reporte TXT del SRI, Conciliación, Nomenclatura Configurable, Excel XLSX).
