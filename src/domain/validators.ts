@@ -109,9 +109,15 @@ export function parseCurrencyAmount(val: string | number | null | undefined): nu
   let clean = str.replace(/[$USD\s]/gi, '');
   if (!clean) return 0;
 
-  // Si tiene coma y punto (ej: 1,250.50): la coma es separador de miles
+  // Si tiene coma y punto:
   if (clean.includes(',') && clean.includes('.')) {
-    clean = clean.replace(/,/g, '');
+    if (clean.lastIndexOf(',') > clean.lastIndexOf('.')) {
+      // Formato latino/europeo (ej: 1.250,50): punto es miles, coma es decimal
+      clean = clean.replace(/\./g, '').replace(',', '.');
+    } else {
+      // Formato anglosajón (ej: 1,250.50): coma es miles, punto es decimal
+      clean = clean.replace(/,/g, '');
+    }
   } else if (clean.includes(',') && !clean.includes('.')) {
     // Si solo tiene coma (ej: 125,50), reemplazar coma por punto
     clean = clean.replace(',', '.');
